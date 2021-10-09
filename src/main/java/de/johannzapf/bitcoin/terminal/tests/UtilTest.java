@@ -4,10 +4,13 @@ package de.johannzapf.bitcoin.terminal.tests;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
 
+import java.util.Arrays;
+
 public class UtilTest {
 
     public static void main(String[] args) throws PaymentFailedException {
 
-        AddressService.getAddressInfo("n3JE86hQr3hhjH2cXBHbVCYUzrmQSePKB6");
+        byte[] b = new byte[4];
+        System.out.println(Arrays.toString(b));
     }
 }

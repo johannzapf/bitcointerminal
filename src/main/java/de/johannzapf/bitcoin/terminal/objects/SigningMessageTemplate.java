@@ -8,6 +8,7 @@ import org.bitcoinj.core.Address;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
 import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 @Setter
@@ -23,37 +24,40 @@ public class SigningMessageTemplate {
     private byte[] scriptSig;
     private byte[] sequence = {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff};
 
-    //Output
-    private byte numberOfOutputs = 0x01;
-    private byte[] value;
-    private int outScriptLength;
-    private byte[] scriptPubKey;
+    //Outputs
+    private byte numberOfOutputs = 0x02;
+    private byte[] value1;
+    private int outScriptLength1;
+    private byte[] scriptPubKey1;
+    private byte[] value2;
+    private int outScriptLength2;
+    private byte[] scriptPubKey2;
 
     private byte[] locktime = {0x00, 0x00, 0x00, 0x00};
     private byte[] sigHashCode = {0x01, 0x00, 0x00, 0x00};
 
 
-    public SigningMessageTemplate(String txHash, byte previousOutputIndex, byte[] outputScriptPubKey,
-                                  byte[] amount, String destinationAddress){
-        byte[] pubKeyHash = getPubKeyHash(destinationAddress);
-        this.previousTxHash = reverse(Util.hexStringToByteArray(txHash));
-        this.previousOutputIndex[0] = previousOutputIndex;
+    public SigningMessageTemplate(Transaction inputTransaction, int outAmount, String destinationAddress,
+                                  String senderAddress){
+        byte[] pubKeyHash1 = getPubKeyHash(destinationAddress);
+        byte[] pubKeyHash2 = getPubKeyHash(senderAddress);
+        this.previousTxHash = reverse(Util.hexStringToByteArray(inputTransaction.getHash()));
+        this.previousOutputIndex[0] = inputTransaction.getIndex();
+        byte[] outputScriptPubKey = Util.hexStringToByteArray(inputTransaction.getOutputPubKey());
         this.inScriptLength = outputScriptPubKey.length;
         this.scriptSig = outputScriptPubKey;
-        this.value = amount;
-        this.outScriptLength = pubKeyHash.length + 5;
-        this.scriptPubKey = constructScriptPubKey(pubKeyHash, pubKeyHash.length + 5);
+        this.value1 = getValue(outAmount);
+        this.outScriptLength1 = pubKeyHash1.length + 5;
+        this.scriptPubKey1 = constructScriptPubKey(pubKeyHash1, pubKeyHash1.length + 5);
+        this.value2 = getValue(inputTransaction.getAmount() - outAmount - FEE);
+        this.outScriptLength2 = pubKeyHash2.length + 5;
+        this.scriptPubKey2 = constructScriptPubKey(pubKeyHash2, pubKeyHash1.length + 5);
     }
 
     public byte[] doubleHash() throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         byte[] sha = digest.digest(Util.hexStringToByteArray(this.toString()));
         return digest.digest(sha);
-    }
-
-    public byte[] singleHash() throws NoSuchAlgorithmException {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        return digest.digest(Util.hexStringToByteArray(this.toString()));
     }
 
     public String toPrettyString() {
@@ -65,9 +69,12 @@ public class SigningMessageTemplate {
                 bytesToHex(scriptSig) + "\n" +
                 bytesToHex(sequence) + "\n" +
                 toHexString(numberOfOutputs) + "\n" +
-                bytesToHex(value) + "\n" +
-                Integer.toHexString(outScriptLength) + "\n" +
-                bytesToHex(scriptPubKey) + "\n" +
+                bytesToHex(value1) + "\n" +
+                Integer.toHexString(outScriptLength1) + "\n" +
+                bytesToHex(scriptPubKey1) + "\n" +
+                bytesToHex(value2) + "\n" +
+                Integer.toHexString(outScriptLength2) + "\n" +
+                bytesToHex(scriptPubKey2) + "\n" +
                 bytesToHex(locktime) + "\n" +
                 bytesToHex(sigHashCode);
     }
@@ -81,9 +88,12 @@ public class SigningMessageTemplate {
                 bytesToHex(scriptSig) + "\n" +
                 bytesToHex(sequence) + "\n" +
                 toHexString(numberOfOutputs) + "\n" +
-                bytesToHex(value) + "\n" +
-                Integer.toHexString(outScriptLength) + "\n" +
-                bytesToHex(scriptPubKey) + "\n" +
+                bytesToHex(value1) + "\n" +
+                Integer.toHexString(outScriptLength1) + "\n" +
+                bytesToHex(scriptPubKey1) + "\n" +
+                bytesToHex(value2) + "\n" +
+                Integer.toHexString(outScriptLength2) + "\n" +
+                bytesToHex(scriptPubKey2) + "\n" +
                 bytesToHex(locktime);
     }
 
@@ -96,9 +106,12 @@ public class SigningMessageTemplate {
                 bytesToHex(scriptSig) +
                 bytesToHex(sequence) +
                 toHexString(numberOfOutputs) +
-                bytesToHex(value) +
-                Integer.toHexString(outScriptLength) +
-                bytesToHex(scriptPubKey) +
+                bytesToHex(value1) +
+                Integer.toHexString(outScriptLength1) +
+                bytesToHex(scriptPubKey1) +
+                bytesToHex(value2) +
+                Integer.toHexString(outScriptLength2) +
+                bytesToHex(scriptPubKey2) +
                 bytesToHex(locktime) +
                 bytesToHex(sigHashCode);
     }
@@ -112,10 +125,27 @@ public class SigningMessageTemplate {
                 bytesToHex(scriptSig) +
                 bytesToHex(sequence) +
                 toHexString(numberOfOutputs) +
-                bytesToHex(value) +
-                Integer.toHexString(outScriptLength) +
-                bytesToHex(scriptPubKey) +
+                bytesToHex(value1) +
+                Integer.toHexString(outScriptLength1) +
+                bytesToHex(scriptPubKey1) +
+                bytesToHex(value2) +
+                Integer.toHexString(outScriptLength2) +
+                bytesToHex(scriptPubKey2) +
                 bytesToHex(locktime);
+    }
+
+    public static byte[] getValue(int satoshi) {
+        byte[] value = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+        String hex = Integer.toHexString(satoshi);
+        if(hex.length() % 2 != 0){
+            hex = "0" + hex;
+        }
+        byte[] a = Util.hexStringToByteArray(hex);
+        int k = 0;
+        for(int i = a.length-1; i >= 0; i--){
+            value[k++] = a[i];
+        }
+        return value;
     }
 
     public static byte[] constructScriptPubKey(byte[] pubKeyHash, int scriptLength){

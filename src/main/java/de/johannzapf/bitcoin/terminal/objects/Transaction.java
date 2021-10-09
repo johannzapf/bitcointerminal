@@ -1,19 +1,22 @@
 package de.johannzapf.bitcoin.terminal.objects;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 public class Transaction {
 
+    @ToString.Include
     private String hash;
+
     private byte index;
+
     private String outputPubKey;
-    private double amount;
+
+    @ToString.Include
+    private int amount;
 
 }

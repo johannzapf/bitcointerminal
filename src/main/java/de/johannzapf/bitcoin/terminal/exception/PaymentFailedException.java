@@ -1,6 +1,6 @@
 package de.johannzapf.bitcoin.terminal.exception;
 
-public class PaymentFailedException extends Exception{
+public class PaymentFailedException extends RuntimeException{
 
     public PaymentFailedException() {
         super();

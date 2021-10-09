@@ -5,7 +5,7 @@ import de.johannzapf.bitcoin.terminal.objects.Address;
 import de.johannzapf.bitcoin.terminal.objects.SigningMessageTemplate;
 import de.johannzapf.bitcoin.terminal.objects.Transaction;
 import de.johannzapf.bitcoin.terminal.util.Constants;
-import de.johannzapf.bitcoin.terminal.util.Util;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,27 +13,15 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-import static de.johannzapf.bitcoin.terminal.util.Util.BTCToSatoshi;
-
 public class TransactionService {
 
     // Creates a Transaction that needs to be signed
-    public static SigningMessageTemplate createSigningMessageTemplate(Address sender, String targetAddress, double amount) throws PaymentFailedException {
-        Transaction tx = sender.findProperTransaction(BTCToSatoshi(amount));
+    public static SigningMessageTemplate createSigningMessageTemplate(Address sender, String targetAddress, int amount,
+                                                                      Transaction inputTransaction) {
+        return new SigningMessageTemplate(inputTransaction, amount, targetAddress, sender.getAddress());
 
-        return new SigningMessageTemplate(tx.getHash(), tx.getIndex(), Util.hexStringToByteArray(tx.getOutputPubKey()), getValue(amount), targetAddress);
     }
 
-
-    private static byte[] getValue(double amount) {
-        byte[] value = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        byte[] a = Util.hexStringToByteArray(Integer.toHexString(BTCToSatoshi(amount)));
-        int k = 0;
-        for(int i = a.length-1; i >= 0; i--){
-            value[k++] = a[i];
-        }
-        return value;
-    }
 
     public static String createTransaction(SigningMessageTemplate smt, byte[] signature, byte[] pubKey) {
         //Construct scriptSig
@@ -55,20 +43,24 @@ public class TransactionService {
         return smt.toStringWithoutHashCode();
     }
 
-
-    public static void decodeTransaction(String transaction){
+    public static String broadcastTransaction(String transaction) {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(Constants.BLOCKCYPHER_API + "/txs/decode"))
+                .uri(URI.create(Constants.BLOCKCYPHER_API + "/txs/push"))
                 .POST(HttpRequest.BodyPublishers.ofString("{\"tx\":\""+ transaction +"\"}"))
                 .build();
 
         try {
             HttpResponse<String> response = client.send(request,
                     HttpResponse.BodyHandlers.ofString());
-            System.out.println("Response:" + response.statusCode() + ": " + response.body());
+
+            if(response.statusCode() == 201){
+                return new JSONObject(response.body()).getJSONObject("tx").getString("hash");
+            } else {
+                throw new PaymentFailedException("Failed to broadcast Transaction: " + response.body());
+            }
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            throw new PaymentFailedException("Blockcypher API Failed", e);
         }
     }
 }

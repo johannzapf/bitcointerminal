@@ -1,8 +1,9 @@
 package de.johannzapf.bitcoin.terminal.util;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -17,11 +18,14 @@ public class Util {
         return (int) (btc*100000000);
     }
 
-    public static JsonObject parseJSON(HttpURLConnection conn) throws IOException {
-        JsonReader jsonReader = Json.createReader(new InputStreamReader(conn.getInputStream()));
-        JsonObject obj = jsonReader.readObject();
-        jsonReader.close();
-        return obj;
+    public static JSONObject parseJSON(HttpURLConnection conn) throws IOException {
+        String res = "";
+        BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+        String s;
+        while((s = r.readLine()) != null){
+            res += s;
+        }
+        return new JSONObject(res);
     }
 
     public static byte toHex(byte b){

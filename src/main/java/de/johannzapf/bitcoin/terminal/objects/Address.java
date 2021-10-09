@@ -5,8 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Getter
 @Setter
@@ -16,16 +16,21 @@ public class Address {
     private String address;
     private double confirmedBalance;
     private double unconfirmedBalance;
+    private double finalBalance;
 
     private List<Transaction> transactions;
 
 
-    public Transaction findProperTransaction(int amount) throws PaymentFailedException {
-        Optional<Transaction> tx = transactions.stream().filter(t -> t.getAmount() > amount).findAny();
-        if(tx.isPresent()){
-            return tx.get();
-        } else {
-            throw new PaymentFailedException("No transaction with enough BTC found");
+    public List<Transaction> findProperTransactions(int amount) throws PaymentFailedException {
+        List<Transaction> txs = new ArrayList<>();
+        int am = 0;
+        for(Transaction t : transactions){
+            if(am < amount){
+                txs.add(t);
+                am += t.getAmount();
+            }
         }
+        System.out.println("Transaction requires " + txs.size() + " input(s)");
+        return txs;
     }
 }

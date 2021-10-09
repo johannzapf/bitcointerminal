@@ -4,12 +4,15 @@ import org.bitcoinj.core.NetworkParameters;
 
 public class Constants {
 
+    public static final int FEE = 6000; //Satoshis
+
     public static final long CARD_READER_TIMEOUT = 60000;
+    public static final boolean DEBUG = false;
 
     public static final byte[] APPLET_AID = new byte[]{1,2,3,4,5,6,7,8,9,0,5};
 
     public static final int CLA = 0x80;
-    public static final int INS_HELLO = 0x00;
+    public static final int INS_VERSION = 0x00;
     public static final int INS_CONN_MODE = 0x01;
     public static final int INS_STATUS = 0x02;
     public static final int INS_INIT = 0x03;
