@@ -1,11 +1,17 @@
 package de.johannzapf.bitcoin.terminal.objects;
 
 import de.johannzapf.bitcoin.terminal.util.Util;
+import lombok.Setter;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import static de.johannzapf.bitcoin.terminal.objects.SigningMessageTemplate.*;
 import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
-import static de.johannzapf.bitcoin.terminal.util.Util.reverse;
+import static de.johannzapf.bitcoin.terminal.util.Util.*;
+import static de.johannzapf.bitcoin.terminal.util.Util.bytesToHex;
 
+@Setter
 public class MultiSigningMessageTemplate {
 
     private byte[] version = {0x01, 0x00, 0x00, 0x00};
@@ -60,6 +66,83 @@ public class MultiSigningMessageTemplate {
         this.value2 = getValue((inputTransaction1.getAmount() + inputTransaction2.getAmount()) - outAmount - FEE);
         this.outScriptLength2 = pubKeyHash2.length + 5;
         this.scriptPubKey2 = constructScriptPubKey(pubKeyHash2, pubKeyHash1.length + 5);
+    }
+
+    public byte[] doubleHash1() throws NoSuchAlgorithmException {
+        String toHash = bytesToHex(version) +
+                toHexString(numberOfInputs) +
+                bytesToHex(previousTxHash1) +
+                bytesToHex(previousOutputIndex1) +
+                toHex(inScriptLength1) +
+                bytesToHex(scriptSig1) +
+                bytesToHex(sequence1) +
+                bytesToHex(previousTxHash2) +
+                bytesToHex(previousOutputIndex2) +
+                toHex(0x00) +
+                bytesToHex(sequence2) +
+                toHexString(numberOfOutputs) +
+                bytesToHex(value1) +
+                toHex(outScriptLength1) +
+                bytesToHex(scriptPubKey1) +
+                bytesToHex(value2) +
+                toHex(outScriptLength2) +
+                bytesToHex(scriptPubKey2) +
+                bytesToHex(locktime) +
+                bytesToHex(sigHashCode);
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] sha = digest.digest(Util.hexStringToByteArray(toHash));
+        return digest.digest(sha);
+    }
+
+    public byte[] doubleHash2() throws NoSuchAlgorithmException {
+        String toHash = bytesToHex(version) +
+                toHexString(numberOfInputs) +
+                bytesToHex(previousTxHash1) +
+                bytesToHex(previousOutputIndex1) +
+                toHex(0x00) +
+                bytesToHex(sequence1) +
+                bytesToHex(previousTxHash2) +
+                bytesToHex(previousOutputIndex2) +
+                toHex(inScriptLength2) +
+                bytesToHex(scriptSig2) +
+                bytesToHex(sequence2) +
+                toHexString(numberOfOutputs) +
+                bytesToHex(value1) +
+                toHex(outScriptLength1) +
+                bytesToHex(scriptPubKey1) +
+                bytesToHex(value2) +
+                toHex(outScriptLength2) +
+                bytesToHex(scriptPubKey2) +
+                bytesToHex(locktime) +
+                bytesToHex(sigHashCode);
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] sha = digest.digest(Util.hexStringToByteArray(toHash));
+        return digest.digest(sha);
+    }
+
+    public String toString() {
+        return bytesToHex(version) +
+                toHexString(numberOfInputs) +
+                bytesToHex(previousTxHash1) +
+                bytesToHex(previousOutputIndex1) +
+                toHex(inScriptLength1) +
+                bytesToHex(scriptSig1) +
+                bytesToHex(sequence1) +
+                bytesToHex(previousTxHash2) +
+                bytesToHex(previousOutputIndex2) +
+                toHex(inScriptLength2) +
+                bytesToHex(scriptSig2) +
+                bytesToHex(sequence2) +
+                toHexString(numberOfOutputs) +
+                bytesToHex(value1) +
+                toHex(outScriptLength1) +
+                bytesToHex(scriptPubKey1) +
+                bytesToHex(value2) +
+                toHex(outScriptLength2) +
+                bytesToHex(scriptPubKey2) +
+                bytesToHex(locktime);
     }
 
 }

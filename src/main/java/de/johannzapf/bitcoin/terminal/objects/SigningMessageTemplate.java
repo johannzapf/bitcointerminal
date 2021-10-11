@@ -65,15 +65,15 @@ public class SigningMessageTemplate {
                 toHexString(numberOfInputs) + "\n" +
                 bytesToHex(previousTxHash) + "\n" +
                 bytesToHex(previousOutputIndex) + "\n" +
-                Integer.toHexString(inScriptLength) + "\n" +
+                toHex(inScriptLength) + "\n" +
                 bytesToHex(scriptSig) + "\n" +
                 bytesToHex(sequence) + "\n" +
                 toHexString(numberOfOutputs) + "\n" +
                 bytesToHex(value1) + "\n" +
-                Integer.toHexString(outScriptLength1) + "\n" +
+                toHex(outScriptLength1) + "\n" +
                 bytesToHex(scriptPubKey1) + "\n" +
                 bytesToHex(value2) + "\n" +
-                Integer.toHexString(outScriptLength2) + "\n" +
+                toHex(outScriptLength2) + "\n" +
                 bytesToHex(scriptPubKey2) + "\n" +
                 bytesToHex(locktime) + "\n" +
                 bytesToHex(sigHashCode);
@@ -84,15 +84,15 @@ public class SigningMessageTemplate {
                 toHexString(numberOfInputs) + "\n" +
                 bytesToHex(previousTxHash) + "\n" +
                 bytesToHex(previousOutputIndex) + "\n" +
-                Integer.toHexString(inScriptLength) + "\n" +
+                toHex(inScriptLength) + "\n" +
                 bytesToHex(scriptSig) + "\n" +
                 bytesToHex(sequence) + "\n" +
                 toHexString(numberOfOutputs) + "\n" +
                 bytesToHex(value1) + "\n" +
-                Integer.toHexString(outScriptLength1) + "\n" +
+                toHex(outScriptLength1) + "\n" +
                 bytesToHex(scriptPubKey1) + "\n" +
                 bytesToHex(value2) + "\n" +
-                Integer.toHexString(outScriptLength2) + "\n" +
+                toHex(outScriptLength2) + "\n" +
                 bytesToHex(scriptPubKey2) + "\n" +
                 bytesToHex(locktime);
     }
@@ -102,15 +102,15 @@ public class SigningMessageTemplate {
                 toHexString(numberOfInputs) +
                 bytesToHex(previousTxHash) +
                 bytesToHex(previousOutputIndex) +
-                Integer.toHexString(inScriptLength) +
+                toHex(inScriptLength) +
                 bytesToHex(scriptSig) +
                 bytesToHex(sequence) +
                 toHexString(numberOfOutputs) +
                 bytesToHex(value1) +
-                Integer.toHexString(outScriptLength1) +
+                toHex(outScriptLength1) +
                 bytesToHex(scriptPubKey1) +
                 bytesToHex(value2) +
-                Integer.toHexString(outScriptLength2) +
+                toHex(outScriptLength2) +
                 bytesToHex(scriptPubKey2) +
                 bytesToHex(locktime) +
                 bytesToHex(sigHashCode);
@@ -121,15 +121,15 @@ public class SigningMessageTemplate {
                 toHexString(numberOfInputs) +
                 bytesToHex(previousTxHash) +
                 bytesToHex(previousOutputIndex) +
-                Integer.toHexString(inScriptLength) +
+                toHex(inScriptLength) +
                 bytesToHex(scriptSig) +
                 bytesToHex(sequence) +
                 toHexString(numberOfOutputs) +
                 bytesToHex(value1) +
-                Integer.toHexString(outScriptLength1) +
+                toHex(outScriptLength1) +
                 bytesToHex(scriptPubKey1) +
                 bytesToHex(value2) +
-                Integer.toHexString(outScriptLength2) +
+                toHex(outScriptLength2) +
                 bytesToHex(scriptPubKey2) +
                 bytesToHex(locktime);
     }

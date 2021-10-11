@@ -2,6 +2,7 @@ package de.johannzapf.bitcoin.terminal.service;
 
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
+import de.johannzapf.bitcoin.terminal.objects.MultiSigningMessageTemplate;
 import de.johannzapf.bitcoin.terminal.objects.SigningMessageTemplate;
 import de.johannzapf.bitcoin.terminal.objects.Transaction;
 import de.johannzapf.bitcoin.terminal.util.Constants;
@@ -15,16 +16,30 @@ import java.net.http.HttpResponse;
 
 public class TransactionService {
 
-    // Creates a Transaction that needs to be signed
-    public static SigningMessageTemplate createSigningMessageTemplate(Address sender, String targetAddress, int amount,
-                                                                      Transaction inputTransaction) {
-        return new SigningMessageTemplate(inputTransaction, amount, targetAddress, sender.getAddress());
-
-    }
-
 
     public static String createTransaction(SigningMessageTemplate smt, byte[] signature, byte[] pubKey) {
         //Construct scriptSig
+        byte[] scriptSig = getScriptSig(signature, pubKey);
+        smt.setScriptSig(scriptSig);
+        smt.setInScriptLength(scriptSig.length);
+
+        return smt.toStringWithoutHashCode();
+    }
+
+    public static String createTransaction(MultiSigningMessageTemplate msmt, byte[] signature1, byte[] signature2,
+                                           byte[] pubKey){
+        byte[] scriptSig1 = getScriptSig(signature1, pubKey);
+        byte[] scriptSig2 = getScriptSig(signature2, pubKey);
+
+        msmt.setScriptSig1(scriptSig1);
+        msmt.setInScriptLength1(scriptSig1.length);
+        msmt.setScriptSig2(scriptSig2);
+        msmt.setInScriptLength2(scriptSig2.length);
+
+        return msmt.toString();
+    }
+
+    private static byte[] getScriptSig(byte[] signature, byte[] pubKey){
         byte[] scriptSig = new byte[3 + signature.length + pubKey.length];
         scriptSig[0] = (byte) (signature.length + 1);
 
@@ -37,10 +52,7 @@ public class TransactionService {
         for(int i = 0; i < pubKey.length; i++){
             scriptSig[signature.length+3+i] = pubKey[i];
         }
-        smt.setScriptSig(scriptSig);
-        smt.setInScriptLength((short) scriptSig.length);
-
-        return smt.toStringWithoutHashCode();
+        return scriptSig;
     }
 
     public static String broadcastTransaction(String transaction) {

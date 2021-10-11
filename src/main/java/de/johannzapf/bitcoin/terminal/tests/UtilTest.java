@@ -10,7 +10,6 @@ public class UtilTest {
 
     public static void main(String[] args) throws PaymentFailedException {
 
-        byte[] b = new byte[4];
-        System.out.println(Arrays.toString(b));
+        System.out.println(Integer.toHexString(0x01));
     }
 }

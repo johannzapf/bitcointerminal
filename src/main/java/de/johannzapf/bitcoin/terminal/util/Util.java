@@ -28,11 +28,12 @@ public class Util {
         return new JSONObject(res);
     }
 
-    public static byte toHex(byte b){
-        byte[] array = new byte[1];
-        array[0] = b;
-        String s = Util.bytesToHex(array);
-        return Byte.parseByte(s, 16);
+    public static String toHex(int i){
+        String s = Integer.toHexString(i);
+        if(s.length() % 2 != 0){
+            return "0" + s;
+        }
+        return s;
     }
 
     public static String toHexString(short b){

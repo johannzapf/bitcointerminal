@@ -4,6 +4,7 @@ import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
+import de.johannzapf.bitcoin.terminal.objects.MultiSigningMessageTemplate;
 import de.johannzapf.bitcoin.terminal.objects.SigningMessageTemplate;
 import de.johannzapf.bitcoin.terminal.objects.Transaction;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
@@ -88,8 +89,7 @@ public class Application {
         String finalTransaction;
 
         if(txs.size() == 1){
-            SigningMessageTemplate smt = TransactionService.createSigningMessageTemplate(address, targetAddress, BTCToSatoshi(amount), txs.get(0));
-
+            SigningMessageTemplate smt = new SigningMessageTemplate(txs.get(0), BTCToSatoshi(amount), targetAddress, address.getAddress());
             System.out.print("Sending to Smartcard for approval..");
 
             byte[] signature;
@@ -97,17 +97,34 @@ public class Application {
                 signature = sendTransaction(channel, smt.doubleHash());
                 System.out.print(".");
             } while(!checkS(signature));
-            long end = System.nanoTime();
-            double elapsed = ((double)(end-start))/1_000_000_000;
+            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
             System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
             finalTransaction = TransactionService.createTransaction(smt, signature, pubKey);
-            System.out.println("FINAL TRANSACTION: " + finalTransaction);
 
+        } else if(txs.size() == 2) {
+            MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs.get(0), txs.get(1), BTCToSatoshi(amount), targetAddress, address.getAddress());
+            System.out.print("Sending to Smartcard for approval..");
+
+            byte[] signature1;
+            do {
+                signature1 = sendTransaction(channel, msmt.doubleHash1());
+                System.out.print(".");
+            } while(!checkS(signature1));
+            byte[] signature2;
+            do {
+                signature2 = sendTransaction(channel, msmt.doubleHash2());
+                System.out.print(".");
+            } while(!checkS(signature2));
+            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
+            System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
+
+            finalTransaction = TransactionService.createTransaction(msmt, signature1, signature2, pubKey);
         } else {
-            throw new PaymentFailedException("No support yet for transactions with multiple inputs");
+            throw new PaymentFailedException("No support yet for transactions with more than 2 inputs");
         }
 
+        System.out.println("FINAL TRANSACTION: " + finalTransaction);
         System.out.println("Broadcast Transaction to P2P Network (y/n)?");
         if(scanner.nextLine().equals("y")){
             String hash = TransactionService.broadcastTransaction(finalTransaction);
