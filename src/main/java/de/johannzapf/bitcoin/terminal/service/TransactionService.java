@@ -1,10 +1,7 @@
 package de.johannzapf.bitcoin.terminal.service;
 
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
-import de.johannzapf.bitcoin.terminal.objects.Address;
-import de.johannzapf.bitcoin.terminal.objects.MultiSigningMessageTemplate;
-import de.johannzapf.bitcoin.terminal.objects.SigningMessageTemplate;
-import de.johannzapf.bitcoin.terminal.objects.Transaction;
+import de.johannzapf.bitcoin.terminal.objects.*;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import org.json.JSONObject;
 
@@ -13,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 public class TransactionService {
 
@@ -26,15 +24,18 @@ public class TransactionService {
         return smt.toStringWithoutHashCode();
     }
 
-    public static String createTransaction(MultiSigningMessageTemplate msmt, byte[] signature1, byte[] signature2,
+    public static String createTransaction(MultiSigningMessageTemplate msmt, List<byte[]> signatures,
                                            byte[] pubKey){
-        byte[] scriptSig1 = getScriptSig(signature1, pubKey);
-        byte[] scriptSig2 = getScriptSig(signature2, pubKey);
-
-        msmt.setScriptSig1(scriptSig1);
-        msmt.setInScriptLength1(scriptSig1.length);
-        msmt.setScriptSig2(scriptSig2);
-        msmt.setInScriptLength2(scriptSig2.length);
+        List<TransactionInput> inputs = msmt.getInputs();
+        if(inputs.size() != signatures.size()){
+            throw new PaymentFailedException("Signature count does not match");
+        }
+        int i = 0;
+        for(byte[] signature : signatures){
+            byte[] scriptSig = getScriptSig(signature, pubKey);
+            inputs.get(i).setScriptSig(scriptSig);
+            inputs.get(i++).setInScriptLength(scriptSig.length);
+        }
 
         return msmt.toString();
     }

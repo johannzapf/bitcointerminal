@@ -19,7 +19,6 @@ public class Constants {
     public static final int INS_GET_PUBKEY = 0x04;
     public static final int INS_GET_ADDR = 0x05;
     public static final int INS_PAY = 0x06;
-    public static final int INS_GET_PRIVKEY = 0x07;
 
     public static final int P1_MAINNET = 0x01;
     public static final int P1_TESTNET = 0x02;

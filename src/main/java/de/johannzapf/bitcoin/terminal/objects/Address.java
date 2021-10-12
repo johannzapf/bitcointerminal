@@ -30,7 +30,6 @@ public class Address {
                 am += t.getAmount();
             }
         }
-        System.out.println("Transaction requires " + txs.size() + " input(s)");
         return txs;
     }
 }

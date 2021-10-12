@@ -1,5 +1,7 @@
 package de.johannzapf.bitcoin.terminal;
 
+import apdu4j.pcsc.PinPadTerminal;
+import apdu4j.pcsc.SCard;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
@@ -10,24 +12,21 @@ import de.johannzapf.bitcoin.terminal.objects.Transaction;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
-import de.johannzapf.bitcoin.terminal.util.Util;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
-import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.security.*;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import static de.johannzapf.bitcoin.terminal.util.Constants.*;
 import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.006;
-    private static String targetAddress = "muTiKdoY7QUGpPrRKwuodwubT9XoZDH3Nt";
+    private static double amount = 0.0007;
+    private static String targetAddress = "moyZQjg4eX6n2zhiD24P5B4XN2srgJFRzq";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -48,7 +47,8 @@ public class Application {
 
         long start = System.nanoTime();
 
-        CardChannel channel = openCardChannel(terminal);
+        Card card = terminal.connect("*");
+        CardChannel channel = card.getBasicChannel();
         if(!selectApplet(channel)){
             System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
             return;
@@ -59,13 +59,16 @@ public class Application {
         connectionMode(channel);
 
         if(!cardStatus(channel)){
-            System.out.println("Bitcoin Wallet on this card is not initialized. Would you like to initialize it (y/n)?");
-            if(scanner.nextLine().equals("y")){
-                initializeWallet(channel);
-            } else {
-                return;
-            }
+            System.out.println("Bitcoin Wallet on this card is not initialized. Please define a PIN to initialize it:");
+            String pin = scanner.nextLine();
+            initializeWallet(channel, Integer.parseInt(pin));
         }
+
+        System.out.println("-------------- PIN Verification --------------");
+        //card.transmitControlCommand(42330006, new byte[0]);
+
+
+
 
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
@@ -73,20 +76,23 @@ public class Application {
         byte[] pubKey = getPubKey(channel);
         System.out.println(">> Public Key: " + bytesToHex(pubKey));
 
+        int sAmount = BTCToSatoshi(amount);
+
         Address address = AddressService.getAddressInfo(btcAddress);
         System.out.println("Available Balance in this Wallet: " + address.getFinalBalance() +
                 " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
-        if(address.getFinalBalance() + satoshiToBTC(FEE) < amount) {
+        if(BTCToSatoshi(address.getFinalBalance()) < FEE + sAmount) {
             System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
             return;
         }
 
         System.out.println("Creating Transaction...");
-        List<Transaction> txs = address.findProperTransactions(BTCToSatoshi(amount) + FEE);
+        List<Transaction> txs = address.findProperTransactions(sAmount + FEE);
+        System.out.println("Transaction requires " + txs.size() + " input(s)");
         String finalTransaction;
 
         if(txs.size() == 1){
-            SigningMessageTemplate smt = new SigningMessageTemplate(txs.get(0), BTCToSatoshi(amount), targetAddress, address.getAddress());
+            SigningMessageTemplate smt = new SigningMessageTemplate(txs.get(0), sAmount, targetAddress, address.getAddress());
             System.out.print("Sending to Smartcard for approval...");
 
             byte[] signature = sendTransaction(channel, smt.doubleHash());
@@ -95,18 +101,20 @@ public class Application {
 
             finalTransaction = TransactionService.createTransaction(smt, signature, pubKey);
 
-        } else if(txs.size() == 2) {
-            MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs.get(0), txs.get(1), BTCToSatoshi(amount), targetAddress, address.getAddress());
+        } else {
+            MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs, sAmount, targetAddress, address.getAddress());
             System.out.print("Sending to Smartcard for approval...");
 
-            byte[] signature1 = sendTransaction(channel, msmt.doubleHash1());
-            byte[] signature2 = sendTransaction(channel, msmt.doubleHash2());
+            List<byte[]> signatures = new ArrayList<>(txs.size());
+
+            for(byte[] toSign : msmt.toSign()){
+                signatures.add(sendTransaction(channel, toSign));
+            }
+
             double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
             System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
-            finalTransaction = TransactionService.createTransaction(msmt, signature1, signature2, pubKey);
-        } else {
-            throw new PaymentFailedException("No support yet for transactions with more than 2 inputs");
+            finalTransaction = TransactionService.createTransaction(msmt, signatures, pubKey);
         }
 
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
@@ -115,6 +123,9 @@ public class Application {
             String hash = TransactionService.broadcastTransaction(finalTransaction);
             System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
         }
+
+        channel.close();
+        card.disconnect(false);
     }
 
     private static byte[] sendTransaction(CardChannel channel, byte[] transaction) throws CardException{
@@ -164,8 +175,8 @@ public class Application {
         }
     }
 
-    private static void initializeWallet(CardChannel channel) throws CardException {
-        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, P1_TESTNET, 0x00);
+    private static void initializeWallet(CardChannel channel, int pin) throws CardException {
+        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, P1_TESTNET, 0x00, ByteBuffer.allocate(4).putInt(pin).array());
         if(!isSuccessful(channel.transmit(init))){
             throw new PaymentFailedException("Error initializing Wallet");
         }
@@ -191,16 +202,6 @@ public class Application {
         }
     }
 
-    private static byte[] getPrivKey(CardChannel channel) throws CardException {
-        CommandAPDU privKey = new CommandAPDU(CLA, INS_GET_PRIVKEY, 0x00, 0x00);
-        ResponseAPDU res = channel.transmit(privKey);
-        if(isSuccessful(res)){
-            return res.getData();
-        } else {
-            throw new PaymentFailedException("Error getting address");
-        }
-    }
-
     private static CardTerminal initializeTerminal() throws NoSuchAlgorithmException, CardException {
         TerminalManager.fixPlatformPaths();
         TerminalFactory factory = TerminalFactory.getInstance("PC/SC", null);
@@ -214,12 +215,6 @@ public class Application {
         amount = Double.parseDouble(scanner.nextLine());
         System.out.println("Target Bitcoin Address: ");
         targetAddress = scanner.nextLine();
-    }
-
-    private static CardChannel openCardChannel(CardTerminal terminal) throws CardException {
-        Card card = terminal.connect("*");
-        CardChannel channel = card.getBasicChannel();
-        return channel;
     }
 
     private static boolean selectApplet(CardChannel channel) throws CardException {

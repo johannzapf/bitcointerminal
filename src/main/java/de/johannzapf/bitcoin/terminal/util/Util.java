@@ -15,7 +15,7 @@ public class Util {
     }
 
     public static int BTCToSatoshi(double btc){
-        return (int) (btc*100000000);
+        return (int) Math.round(btc*100000000);
     }
 
     public static JSONObject parseJSON(HttpURLConnection conn) throws IOException {

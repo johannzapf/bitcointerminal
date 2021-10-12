@@ -47,6 +47,7 @@ public class SigningMessageTemplate {
         this.inScriptLength = outputScriptPubKey.length;
         this.scriptSig = outputScriptPubKey;
         this.value1 = getValue(outAmount);
+
         this.outScriptLength1 = pubKeyHash1.length + 5;
         this.scriptPubKey1 = constructScriptPubKey(pubKeyHash1, pubKeyHash1.length + 5);
         this.value2 = getValue(inputTransaction.getAmount() - outAmount - FEE);
