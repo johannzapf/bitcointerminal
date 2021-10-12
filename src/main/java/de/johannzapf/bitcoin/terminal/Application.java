@@ -26,11 +26,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static final BigInteger N = new BigInteger("115792089237316195423570985008687907852837564279074904382605163141518161494337", 10);
-    private static final BigInteger N2 = N.divide(new BigInteger("2", 10));
-
-    private static double amount = 0.0046;
-    private static String targetAddress = "mzjF1AQLZek45yhhwWGuTCNxHCafSbF6iS";
+    private static double amount = 0.006;
+    private static String targetAddress = "muTiKdoY7QUGpPrRKwuodwubT9XoZDH3Nt";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -90,13 +87,9 @@ public class Application {
 
         if(txs.size() == 1){
             SigningMessageTemplate smt = new SigningMessageTemplate(txs.get(0), BTCToSatoshi(amount), targetAddress, address.getAddress());
-            System.out.print("Sending to Smartcard for approval..");
+            System.out.print("Sending to Smartcard for approval...");
 
-            byte[] signature;
-            do {
-                signature = sendTransaction(channel, smt.doubleHash());
-                System.out.print(".");
-            } while(!checkS(signature));
+            byte[] signature = sendTransaction(channel, smt.doubleHash());
             double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
             System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
@@ -104,18 +97,10 @@ public class Application {
 
         } else if(txs.size() == 2) {
             MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs.get(0), txs.get(1), BTCToSatoshi(amount), targetAddress, address.getAddress());
-            System.out.print("Sending to Smartcard for approval..");
+            System.out.print("Sending to Smartcard for approval...");
 
-            byte[] signature1;
-            do {
-                signature1 = sendTransaction(channel, msmt.doubleHash1());
-                System.out.print(".");
-            } while(!checkS(signature1));
-            byte[] signature2;
-            do {
-                signature2 = sendTransaction(channel, msmt.doubleHash2());
-                System.out.print(".");
-            } while(!checkS(signature2));
+            byte[] signature1 = sendTransaction(channel, msmt.doubleHash1());
+            byte[] signature2 = sendTransaction(channel, msmt.doubleHash2());
             double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
             System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
@@ -132,64 +117,6 @@ public class Application {
         }
     }
 
-    /**
-     * Checks whether the s value of the given signature is smaller than N/2
-     * @param signature
-     * @return true if signature is OK, false otherwise
-     */
-    private static boolean checkS(byte[] signature){
-
-        byte rlength = signature[3];
-        byte slength = signature[5 + rlength];
-
-        byte[] s = new byte[slength];
-        int j = 0;
-        for(int i = 6 + rlength; i < 6 + rlength + slength; i++){
-            s[j++] = signature[i];
-        }
-
-        BigInteger bs = new BigInteger(bytesToHex(s), 16);
-
-        return bs.compareTo(N2) < 0;
-
-        /*if(bs.compareTo(n2) > 0){
-            System.err.println("Fixing Signature...");
-            System.out.println("Old signature: " + bytesToHex(signature));
-            String newbs = N.subtract(bs).toString(16);
-            while(newbs.length() < 64){
-                newbs = "0" + newbs;
-            }
-            System.out.println("NEW S: " + newbs);
-            byte[] newS = hexStringToByteArray(N.subtract(bs).toString(16));
-
-
-
-            if(newS.length == s.length){
-                int k = 0;
-                for(int i = 6 + rlength; i < 6 + rlength + slength; i++){
-                    signature[i] = newS[k++];
-                }
-            } else {
-                System.err.println("Signature length has changed");
-                int diff = s.length - newS.length;
-                byte[] newSig = new byte[signature.length - diff];
-                for(int i = 0; i < 5 + rlength; i++){
-                    newSig[i] = signature[i];
-                }
-                newSig[5+rlength] = (byte) (slength-diff);
-                int k = 0;
-                for(int i = 6 + rlength; i < 6 + rlength + newS.length; i++){
-                    newSig[i] = newS[k++];
-                }
-                System.out.println("New signature: " + bytesToHex(newSig));
-                return newSig;
-            }
-        }
-
-        return signature;*/
-    }
-
-
     private static byte[] sendTransaction(CardChannel channel, byte[] transaction) throws CardException{
         CommandAPDU pay = new CommandAPDU(CLA, INS_PAY, 0x00, 0x00, transaction);
         ResponseAPDU res = channel.transmit(pay);
@@ -199,7 +126,6 @@ public class Application {
         } else {
             throw new PaymentFailedException("Transaction returned " + Arrays.toString(res.getData()));
         }
-
     }
 
     private static void version(CardChannel channel) throws CardException {
