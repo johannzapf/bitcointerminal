@@ -25,8 +25,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0007;
-    private static String targetAddress = "moyZQjg4eX6n2zhiD24P5B4XN2srgJFRzq";
+    private static double amount = 0.0006;
+    private static String targetAddress = "muU9RtG1cwqgNSg4xv2hD7yA737YcPRLSc";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -49,6 +49,10 @@ public class Application {
 
         Card card = terminal.connect("*");
         CardChannel channel = card.getBasicChannel();
+
+        System.out.println("-------------- PIN Verification --------------");
+
+
         if(!selectApplet(channel)){
             System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
             return;
@@ -65,10 +69,6 @@ public class Application {
         }
 
         System.out.println("-------------- PIN Verification --------------");
-        //card.transmitControlCommand(42330006, new byte[0]);
-
-
-
 
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
@@ -123,9 +123,6 @@ public class Application {
             String hash = TransactionService.broadcastTransaction(finalTransaction);
             System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
         }
-
-        channel.close();
-        card.disconnect(false);
     }
 
     private static byte[] sendTransaction(CardChannel channel, byte[] transaction) throws CardException{
@@ -176,7 +173,8 @@ public class Application {
     }
 
     private static void initializeWallet(CardChannel channel, int pin) throws CardException {
-        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, P1_TESTNET, 0x00, ByteBuffer.allocate(4).putInt(pin).array());
+        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00,
+                ByteBuffer.allocate(4).putInt(pin).array());
         if(!isSuccessful(channel.transmit(init))){
             throw new PaymentFailedException("Error initializing Wallet");
         }

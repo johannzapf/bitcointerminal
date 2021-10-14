@@ -61,43 +61,6 @@ public class SigningMessageTemplate {
         return digest.digest(sha);
     }
 
-    public String toPrettyString() {
-        return bytesToHex(version) + "\n" +
-                toHexString(numberOfInputs) + "\n" +
-                bytesToHex(previousTxHash) + "\n" +
-                bytesToHex(previousOutputIndex) + "\n" +
-                toHex(inScriptLength) + "\n" +
-                bytesToHex(scriptSig) + "\n" +
-                bytesToHex(sequence) + "\n" +
-                toHexString(numberOfOutputs) + "\n" +
-                bytesToHex(value1) + "\n" +
-                toHex(outScriptLength1) + "\n" +
-                bytesToHex(scriptPubKey1) + "\n" +
-                bytesToHex(value2) + "\n" +
-                toHex(outScriptLength2) + "\n" +
-                bytesToHex(scriptPubKey2) + "\n" +
-                bytesToHex(locktime) + "\n" +
-                bytesToHex(sigHashCode);
-    }
-
-    public String toPrettyStringWithoutHashCode() {
-        return bytesToHex(version) + "\n" +
-                toHexString(numberOfInputs) + "\n" +
-                bytesToHex(previousTxHash) + "\n" +
-                bytesToHex(previousOutputIndex) + "\n" +
-                toHex(inScriptLength) + "\n" +
-                bytesToHex(scriptSig) + "\n" +
-                bytesToHex(sequence) + "\n" +
-                toHexString(numberOfOutputs) + "\n" +
-                bytesToHex(value1) + "\n" +
-                toHex(outScriptLength1) + "\n" +
-                bytesToHex(scriptPubKey1) + "\n" +
-                bytesToHex(value2) + "\n" +
-                toHex(outScriptLength2) + "\n" +
-                bytesToHex(scriptPubKey2) + "\n" +
-                bytesToHex(locktime);
-    }
-
     public String toString() {
         return bytesToHex(version) +
                 toHexString(numberOfInputs) +

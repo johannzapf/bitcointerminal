@@ -4,10 +4,12 @@ import org.bitcoinj.core.NetworkParameters;
 
 public class Constants {
 
+    public static final boolean TESTNET = true;
+
     public static final int FEE = 6000; //Satoshis
 
     public static final long CARD_READER_TIMEOUT = 60000;
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
     public static final byte[] APPLET_AID = new byte[]{1,2,3,4,5,6,7,8,9,0,5};
 
@@ -23,8 +25,10 @@ public class Constants {
     public static final int P1_MAINNET = 0x01;
     public static final int P1_TESTNET = 0x02;
 
-    public static final NetworkParameters netParams = NetworkParameters.fromID(NetworkParameters.ID_TESTNET);
+    public static final NetworkParameters netParams = TESTNET ? NetworkParameters.fromID(NetworkParameters.ID_TESTNET)
+            : NetworkParameters.fromID(NetworkParameters.ID_MAINNET);
 
-    public static final String BLOCKCYPHER_API = "https://api.blockcypher.com/v1/btc/test3";
+    public static final String BLOCKCYPHER_API = TESTNET ? "https://api.blockcypher.com/v1/btc/test3" :
+            "https://api.blockcypher.com/v1/btc/main" ;
 
 }
