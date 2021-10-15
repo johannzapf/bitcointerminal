@@ -21,9 +21,9 @@ public class Address {
     private List<Transaction> transactions;
 
 
-    public List<Transaction> findProperTransactions(int amount) throws PaymentFailedException {
+    public List<Transaction> findProperTransactions(long amount) throws PaymentFailedException {
         List<Transaction> txs = new ArrayList<>();
-        int am = 0;
+        long am = 0;
         for(Transaction t : transactions){
             if(am < amount){
                 txs.add(t);

@@ -44,7 +44,7 @@ public class AddressService {
                 for (int i = 0; i < txs.length(); i++) {
                     JSONObject tx = txs.getJSONObject(i);
                     transactions.add(new Transaction(tx.getString("tx_hash"), (byte) tx.getInt("tx_output_n"),
-                            tx.getString("script"), tx.getInt("value")));
+                            tx.getString("script"), tx.getLong("value")));
                 }
             }
             if(addr.has("unconfirmed_txrefs")){
@@ -52,10 +52,10 @@ public class AddressService {
                 for (int i = 0; i < txsu.length(); i++) {
                     JSONObject tx = txsu.getJSONObject(i);
                     transactions.add(new Transaction(tx.getString("tx_hash"), (byte) tx.getInt("tx_output_n"),
-                            tx.getString("script"), tx.getInt("value")));
+                            tx.getString("script"), tx.getLong("value")));
                 }
             }
-            address.setTransactions(transactions.stream().sorted(Comparator.comparingInt(Transaction::getAmount).reversed()).collect(Collectors.toList()));
+            address.setTransactions(transactions.stream().sorted(Comparator.comparingLong(Transaction::getAmount).reversed()).collect(Collectors.toList()));
             return address;
         } catch (IOException e) {
             throw new PaymentFailedException("Blockcypher API Failed", e);

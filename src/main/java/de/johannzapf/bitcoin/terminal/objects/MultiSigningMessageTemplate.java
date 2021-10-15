@@ -38,7 +38,7 @@ public class MultiSigningMessageTemplate {
     private byte[] sigHashCode = {0x01, 0x00, 0x00, 0x00};
 
 
-    public MultiSigningMessageTemplate(List<Transaction> inputTransactions, int outAmount,
+    public MultiSigningMessageTemplate(List<Transaction> inputTransactions, long outAmount,
                                        String destinationAddress, String senderAddress){
 
         byte[] pubKeyHash1 = getPubKeyHash(destinationAddress);

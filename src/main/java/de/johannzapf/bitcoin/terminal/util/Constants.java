@@ -9,7 +9,7 @@ public class Constants {
     public static final int FEE = 6000; //Satoshis
 
     public static final long CARD_READER_TIMEOUT = 60000;
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     public static final byte[] APPLET_AID = new byte[]{1,2,3,4,5,6,7,8,9,0,5};
 

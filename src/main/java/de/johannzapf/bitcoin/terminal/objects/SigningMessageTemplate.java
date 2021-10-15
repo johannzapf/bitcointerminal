@@ -37,7 +37,7 @@ public class SigningMessageTemplate {
     private byte[] sigHashCode = {0x01, 0x00, 0x00, 0x00};
 
 
-    public SigningMessageTemplate(Transaction inputTransaction, int outAmount, String destinationAddress,
+    public SigningMessageTemplate(Transaction inputTransaction, long outAmount, String destinationAddress,
                                   String senderAddress){
         byte[] pubKeyHash1 = getPubKeyHash(destinationAddress);
         byte[] pubKeyHash2 = getPubKeyHash(senderAddress);
@@ -98,9 +98,9 @@ public class SigningMessageTemplate {
                 bytesToHex(locktime);
     }
 
-    public static byte[] getValue(int satoshi) {
+    public static byte[] getValue(long satoshi) {
         byte[] value = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        String hex = Integer.toHexString(satoshi);
+        String hex = Long.toHexString(satoshi);
         if(hex.length() % 2 != 0){
             hex = "0" + hex;
         }

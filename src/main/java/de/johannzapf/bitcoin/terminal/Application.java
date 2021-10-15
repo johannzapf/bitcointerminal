@@ -1,7 +1,5 @@
 package de.johannzapf.bitcoin.terminal;
 
-import apdu4j.pcsc.PinPadTerminal;
-import apdu4j.pcsc.SCard;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
@@ -12,6 +10,7 @@ import de.johannzapf.bitcoin.terminal.objects.Transaction;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
+import de.johannzapf.bitcoin.terminal.util.Util;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
@@ -25,8 +24,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0006;
-    private static String targetAddress = "muU9RtG1cwqgNSg4xv2hD7yA737YcPRLSc";
+    private static double amount = 0.017;
+    private static String targetAddress = "mpwTUUshgo3voJwWsbsuzZMfe4JazBhi93";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -76,7 +75,7 @@ public class Application {
         byte[] pubKey = getPubKey(channel);
         System.out.println(">> Public Key: " + bytesToHex(pubKey));
 
-        int sAmount = BTCToSatoshi(amount);
+        long sAmount = BTCToSatoshi(amount);
 
         Address address = AddressService.getAddressInfo(btcAddress);
         System.out.println("Available Balance in this Wallet: " + address.getFinalBalance() +
@@ -92,14 +91,36 @@ public class Application {
         String finalTransaction;
 
         if(txs.size() == 1){
-            SigningMessageTemplate smt = new SigningMessageTemplate(txs.get(0), sAmount, targetAddress, address.getAddress());
+
+            Transaction tx = txs.get(0);
+
+            SigningMessageTemplate smt = new SigningMessageTemplate(tx, sAmount, targetAddress, address.getAddress());
+
+            byte[] arg0 = SigningMessageTemplate.getPubKeyHash(targetAddress);
+            byte[] arg1 = Util.hexStringToByteArray(Long.toHexString(sAmount));
+            byte[] arg2 = tx.asByteArray(sAmount);
+
+            byte[] params = new byte[94];
+            int k = 0;
+            for(int i = 0; i < 20; i++){
+                params[i] = arg0[k++];
+            }
+            k = 8 - arg1.length;
+            for(int i = 20; i < 28; i++){
+                params[i] = arg1[k++];
+            }
+            k = 0;
+            for(int i = 28; i < 94; i++){
+                params[i] = arg2[k++];
+            }
+
             System.out.print("Sending to Smartcard for approval...");
 
-            byte[] signature = sendTransaction(channel, smt.doubleHash());
+            byte[] transaction = createTransaction(channel, params);
             double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
             System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
-            finalTransaction = TransactionService.createTransaction(smt, signature, pubKey);
+            finalTransaction = Util.bytesToHex(transaction);
 
         } else {
             MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs, sAmount, targetAddress, address.getAddress());
@@ -108,7 +129,7 @@ public class Application {
             List<byte[]> signatures = new ArrayList<>(txs.size());
 
             for(byte[] toSign : msmt.toSign()){
-                signatures.add(sendTransaction(channel, toSign));
+                signatures.add(createTransaction(channel, toSign));
             }
 
             double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
@@ -125,8 +146,8 @@ public class Application {
         }
     }
 
-    private static byte[] sendTransaction(CardChannel channel, byte[] transaction) throws CardException{
-        CommandAPDU pay = new CommandAPDU(CLA, INS_PAY, 0x00, 0x00, transaction);
+    private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
+        CommandAPDU pay = new CommandAPDU(CLA, INS_PAY, 0x00, 0x00, params);
         ResponseAPDU res = channel.transmit(pay);
         if(isSuccessful(res)){
             byte[] data = res.getData();
