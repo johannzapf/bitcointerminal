@@ -26,7 +26,8 @@ public class Transaction {
         byte argA = index;
         byte[] argB = Util.hexStringToByteArray(hash);
         byte[] argC = Util.hexStringToByteArray(outputPubKey);
-        byte[] argD = Util.hexStringToByteArray(Long.toHexString(amount - outAmount - FEE));
+        byte[] argD = Util.hexStringToByteArray(Util.toHex(amount - outAmount - FEE));
+
 
         byte[] res = new byte[66];
         res[0] = argA;
@@ -38,11 +39,10 @@ public class Transaction {
         for(int i = 33; i < 58; i++){
             res[i] = argC[k++];
         }
-        k = 8 - argD.length;
-        for(int i = 58; i < 66; i++){
+        k = 0;
+        for(int i = 58 + (8-argD.length); i < 66; i++){
             res[i] = argD[k++];
         }
-
         return res;
     }
 

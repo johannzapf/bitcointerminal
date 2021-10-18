@@ -36,6 +36,14 @@ public class Util {
         return s;
     }
 
+    public static String toHex(long i){
+        String s = Long.toHexString(i);
+        if(s.length() % 2 != 0){
+            return "0" + s;
+        }
+        return s;
+    }
+
     public static String toHexString(short b){
         if(b <= 0x09){
             return "0" + b;
@@ -80,4 +88,6 @@ public class Util {
         }
         return new String(hexChars);
     }
+
+
 }

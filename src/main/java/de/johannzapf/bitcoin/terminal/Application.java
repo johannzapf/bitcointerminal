@@ -24,8 +24,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.017;
-    private static String targetAddress = "mpwTUUshgo3voJwWsbsuzZMfe4JazBhi93";
+    private static double amount = 0.009;
+    private static String targetAddress = "n4ZiE7oMCxQegbJFu8nAW8V5EzpmMhbyJ3";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -82,7 +82,7 @@ public class Application {
                 " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
         if(BTCToSatoshi(address.getFinalBalance()) < FEE + sAmount) {
             System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
-            return;
+            //return;
         }
 
         System.out.println("Creating Transaction...");
@@ -90,14 +90,17 @@ public class Application {
         System.out.println("Transaction requires " + txs.size() + " input(s)");
         String finalTransaction;
 
-        if(txs.size() == 1){
+        if(txs.size() <= 1){
 
             Transaction tx = txs.get(0);
+
+            //tx = new Transaction("6a6d31b53fb55b5c9190cd7515ced73d7cecb24459cee50b308b2bec4d7a8b44", (byte) 0,
+           //         "76a914da5cf58662b5c384733361fc38240f7e40ee08ce88ac", 800000);
 
             SigningMessageTemplate smt = new SigningMessageTemplate(tx, sAmount, targetAddress, address.getAddress());
 
             byte[] arg0 = SigningMessageTemplate.getPubKeyHash(targetAddress);
-            byte[] arg1 = Util.hexStringToByteArray(Long.toHexString(sAmount));
+            byte[] arg1 = Util.hexStringToByteArray(toHex(sAmount));
             byte[] arg2 = tx.asByteArray(sAmount);
 
             byte[] params = new byte[94];
@@ -105,8 +108,8 @@ public class Application {
             for(int i = 0; i < 20; i++){
                 params[i] = arg0[k++];
             }
-            k = 8 - arg1.length;
-            for(int i = 20; i < 28; i++){
+            k = 0;
+            for(int i = 20 + (8-arg1.length); i < 28; i++){
                 params[i] = arg1[k++];
             }
             k = 0;
@@ -116,12 +119,15 @@ public class Application {
 
             System.out.print("Sending to Smartcard for approval...");
 
-            byte[] transaction = createTransaction(channel, params);
+            //byte[] transaction = createTransaction(channel, params);
             double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
             System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
-            finalTransaction = Util.bytesToHex(transaction);
+            finalTransaction = "";//Util.bytesToHex(transaction);
 
+            byte[] signature = sign(channel, smt.doubleHash());
+
+            System.out.println("CORRECT: " + TransactionService.createTransaction(smt, signature, pubKey));
         } else {
             MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs, sAmount, targetAddress, address.getAddress());
             System.out.print("Sending to Smartcard for approval...");
@@ -143,6 +149,18 @@ public class Application {
         if(scanner.nextLine().equals("y")){
             String hash = TransactionService.broadcastTransaction(finalTransaction);
             System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
+        }
+    }
+
+
+    private static byte[] sign(CardChannel channel, byte[] toSign) throws CardException{
+        CommandAPDU signature = new CommandAPDU(CLA, INS_SIGN, 0x00, 0x00, toSign);
+        ResponseAPDU res = channel.transmit(signature);
+        if(isSuccessful(res)){
+            byte[] data = res.getData();
+            return data;
+        } else {
+            throw new PaymentFailedException("Sign returned " + Arrays.toString(res.getData()));
         }
     }
 
