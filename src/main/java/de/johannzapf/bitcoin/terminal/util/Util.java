@@ -1,6 +1,7 @@
 package de.johannzapf.bitcoin.terminal.util;
 
 
+import org.bitcoinj.core.Address;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -16,6 +17,10 @@ public class Util {
 
     public static long BTCToSatoshi(double btc){
         return Math.round(btc*100000000);
+    }
+
+    public static byte[] getPubKeyHash(String address){
+        return Address.fromString(Constants.netParams, address).getHash();
     }
 
     public static JSONObject parseJSON(HttpURLConnection conn) throws IOException {

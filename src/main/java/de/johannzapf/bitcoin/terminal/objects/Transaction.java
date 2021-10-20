@@ -22,14 +22,12 @@ public class Transaction {
     @ToString.Include
     private long amount;
 
-    public byte[] asByteArray(long outAmount){
+    public byte[] asByteArray(){
         byte argA = index;
         byte[] argB = Util.hexStringToByteArray(hash);
         byte[] argC = Util.hexStringToByteArray(outputPubKey);
-        byte[] argD = Util.hexStringToByteArray(Util.toHex(amount - outAmount - FEE));
 
-
-        byte[] res = new byte[66];
+        byte[] res = new byte[58];
         res[0] = argA;
         int k = 0;
         for(int i = 1; i < 33; i++){
@@ -38,10 +36,6 @@ public class Transaction {
         k = 0;
         for(int i = 33; i < 58; i++){
             res[i] = argC[k++];
-        }
-        k = 0;
-        for(int i = 58 + (8-argD.length); i < 66; i++){
-            res[i] = argD[k++];
         }
         return res;
     }

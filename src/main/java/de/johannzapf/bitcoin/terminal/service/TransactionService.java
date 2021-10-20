@@ -10,51 +10,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.List;
 
 public class TransactionService {
-
-
-    public static String createTransaction(SigningMessageTemplate smt, byte[] signature, byte[] pubKey) {
-        //Construct scriptSig
-        byte[] scriptSig = getScriptSig(signature, pubKey);
-        smt.setScriptSig(scriptSig);
-        smt.setInScriptLength(scriptSig.length);
-
-        return smt.toStringWithoutHashCode();
-    }
-
-    public static String createTransaction(MultiSigningMessageTemplate msmt, List<byte[]> signatures,
-                                           byte[] pubKey){
-        List<TransactionInput> inputs = msmt.getInputs();
-        if(inputs.size() != signatures.size()){
-            throw new PaymentFailedException("Signature count does not match");
-        }
-        int i = 0;
-        for(byte[] signature : signatures){
-            byte[] scriptSig = getScriptSig(signature, pubKey);
-            inputs.get(i).setScriptSig(scriptSig);
-            inputs.get(i++).setInScriptLength(scriptSig.length);
-        }
-
-        return msmt.toString();
-    }
-
-    private static byte[] getScriptSig(byte[] signature, byte[] pubKey){
-        byte[] scriptSig = new byte[3 + signature.length + pubKey.length];
-        scriptSig[0] = (byte) (signature.length + 1);
-
-        for(int i = 0; i < signature.length; i++){
-            scriptSig[i+1] = signature[i];
-        }
-        scriptSig[signature.length+1] = 0x01;
-        scriptSig[signature.length+2] = (byte) pubKey.length;
-
-        for(int i = 0; i < pubKey.length; i++){
-            scriptSig[signature.length+3+i] = pubKey[i];
-        }
-        return scriptSig;
-    }
 
     public static String broadcastTransaction(String transaction) {
         HttpClient client = HttpClient.newHttpClient();
