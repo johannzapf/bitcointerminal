@@ -11,10 +11,9 @@ public class Constants {
 
     public static final boolean DEBUG = false;
 
-    public static final int FEE = 6000; //Satoshis
+    public static final long FEE = 6000; //Satoshis
 
     public static final long CARD_READER_TIMEOUT = 60000;
-
 
 
     //OTHER CONSTANTS
@@ -26,6 +25,7 @@ public class Constants {
     public static final int INS_CONN_MODE = 0x01;
     public static final int INS_STATUS = 0x02;
     public static final int INS_INIT = 0x03;
+    public static final int INS_VERIFY_PIN = 0x04;
     public static final int INS_GET_ADDR = 0x05;
     public static final int INS_PAY = 0x06;
 

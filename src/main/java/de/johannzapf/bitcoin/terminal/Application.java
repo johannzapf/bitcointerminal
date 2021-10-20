@@ -22,7 +22,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.01;
+    private static double amount = 0.0199;
     private static String targetAddress = "mqor5z74XnX6rKPztY2L8hW48oYPH5hZwB";
 
     private static Scanner scanner = new Scanner(System.in);
