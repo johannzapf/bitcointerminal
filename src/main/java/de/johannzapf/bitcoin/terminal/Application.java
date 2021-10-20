@@ -22,8 +22,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.019;
-    private static String targetAddress = "mqor5z74XnX6rKPztY2L8hW48oYPH5hZwB";
+    private static double amount = 0.028;
+    private static String targetAddress = "mftKh489uszdEZPMxPUpPSnLwV6FdGt6px";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -86,87 +86,19 @@ public class Application {
         System.out.println("Creating Transaction...");
         List<Transaction> txs = address.findProperTransactions(sAmount + FEE);
         System.out.println("Transaction requires " + txs.size() + " input(s)");
-        String finalTransaction;
 
-        if(txs.size() == 1){
-            Transaction tx = txs.get(0);
 
-            byte[] arg0 = getPubKeyHash(targetAddress);
-            byte[] arg1 = Util.hexStringToByteArray(toHex(sAmount));
-            byte[] arg2 = Util.hexStringToByteArray(Util.toHex(tx.getAmount() - sAmount - FEE));
-            byte[] arg3 = tx.asByteArray();
+        System.out.print("Sending to Smartcard for approval...");
 
-            byte[] params = new byte[95];
-            int k = 0;
-            for(int i = 0; i < 20; i++){
-                params[i] = arg0[k++];
-            }
-            k = 0;
-            for(int i = 20 + (8-arg1.length); i < 28; i++){
-                params[i] = arg1[k++];
-            }
-            k = 0;
-            for(int i = 28 + (8-arg2.length); i < 36; i++){
-                params[i] = arg2[k++];
-            }
-            params[36] = 0x01;
-            k = 0;
-            for(int i = 37; i < 95; i++){
-                params[i] = arg3[k++];
-            }
+        byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, txs);
+        byte[] transaction = createTransaction(channel, txParams);
 
-            System.out.print("Sending to Smartcard for approval...");
+        double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
+        System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
-            byte[] transaction = createTransaction(channel, params);
-            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-            System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
-
-            finalTransaction = Util.bytesToHex(transaction);
-        } else {
-            System.out.print("Sending to Smartcard for approval...");
-
-            byte[] arg0 = getPubKeyHash(targetAddress);
-            byte[] arg1 = Util.hexStringToByteArray(toHex(sAmount));
-
-            int inAmount = 0;
-            for(Transaction t : txs){
-                inAmount += t.getAmount();
-            }
-            byte[] arg2 = Util.hexStringToByteArray(Util.toHex(inAmount - sAmount - FEE));
-
-            int arraySize = 37 + 58 * txs.size();
-            byte[] params = new byte[arraySize];
-
-            int k = 0;
-            for(int i = 0; i < 20; i++){
-                params[i] = arg0[k++];
-            }
-            k = 0;
-            for(int i = 20 + (8-arg1.length); i < 28; i++){
-                params[i] = arg1[k++];
-            }
-            k = 0;
-            for(int i = 28 + (8-arg2.length); i < 36; i++){
-                params[i] = arg2[k++];
-            }
-
-            params[36] = (byte) txs.size();
-
-            for(int j = 0; j < txs.size(); j++){
-                byte[] arg3 = txs.get(j).asByteArray();
-                k = 0;
-                for(int i = 37; i < 95; i++){
-                    params[i + j * 58] = arg3[k++];
-                }
-            }
-
-            byte[] transaction = createTransaction(channel, params);
-            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-            System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
-            finalTransaction = Util.bytesToHex(transaction);
-        }
-
+        String finalTransaction = Util.bytesToHex(transaction);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
+
         System.out.println("Broadcast Transaction to P2P Network (y/n)?");
         if(scanner.nextLine().equals("y")){
             String hash = TransactionService.broadcastTransaction(finalTransaction);
