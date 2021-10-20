@@ -22,8 +22,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.028;
-    private static String targetAddress = "mftKh489uszdEZPMxPUpPSnLwV6FdGt6px";
+    private static double amount = 0.01;
+    private static String targetAddress = "mqor5z74XnX6rKPztY2L8hW48oYPH5hZwB";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -70,8 +70,6 @@ public class Application {
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
         System.out.println(">> Address: " + btcAddress);
-        byte[] pubKey = getPubKey(channel);
-        System.out.println(">> Public Key: " + bytesToHex(pubKey));
 
         long sAmount = BTCToSatoshi(amount);
 
@@ -99,11 +97,15 @@ public class Application {
         String finalTransaction = Util.bytesToHex(transaction);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
 
-        System.out.println("Broadcast Transaction to P2P Network (y/n)?");
-        if(scanner.nextLine().equals("y")){
-            String hash = TransactionService.broadcastTransaction(finalTransaction);
-            System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
+        if(!AUTO_BROADCAST){
+            System.out.println("Broadcast Transaction to P2P Network (y/n)?");
+            if(!scanner.nextLine().equals("y")){
+                return;
+            }
         }
+        String hash = TransactionService.broadcastTransaction(finalTransaction);
+        System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
+
     }
 
     private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
@@ -166,16 +168,6 @@ public class Application {
         ResponseAPDU res = channel.transmit(addr);
         if(isSuccessful(res)){
             return Base58.encode(res.getData());
-        } else {
-            throw new PaymentFailedException("Error getting address");
-        }
-    }
-
-    private static byte[] getPubKey(CardChannel channel) throws CardException {
-        CommandAPDU pubKey = new CommandAPDU(CLA, INS_GET_PUBKEY, 0x00, 0x00);
-        ResponseAPDU res = channel.transmit(pubKey);
-        if(isSuccessful(res)){
-            return res.getData();
         } else {
             throw new PaymentFailedException("Error getting address");
         }
