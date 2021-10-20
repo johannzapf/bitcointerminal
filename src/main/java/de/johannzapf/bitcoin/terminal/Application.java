@@ -65,8 +65,6 @@ public class Application {
             initializeWallet(channel, Integer.parseInt(pin));
         }
 
-        System.out.println("-------------- PIN Verification --------------");
-
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
         System.out.println(">> Address: " + btcAddress);
