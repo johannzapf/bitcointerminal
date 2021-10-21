@@ -1,5 +1,6 @@
 package de.johannzapf.bitcoin.terminal;
 
+import apdu4j.pcsc.PinPadTerminal;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
@@ -22,11 +23,12 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0199;
-    private static String targetAddress = "mqor5z74XnX6rKPztY2L8hW48oYPH5hZwB";
+    private static double amount = 0.001;
+    private static String targetAddress = "mfrWKVeFGxsCWafcTCATG2zhza3ovFXAUR";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
+
 
     public static void main(String[] args) throws CardException, NoSuchAlgorithmException {
         System.out.println("-------- Initializing Payment Terminal --------");
@@ -47,8 +49,6 @@ public class Application {
         Card card = terminal.connect("*");
         CardChannel channel = card.getBasicChannel();
 
-        System.out.println("-------------- PIN Verification --------------");
-
 
         if(!selectApplet(channel)){
             System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
@@ -61,9 +61,40 @@ public class Application {
 
         if(!cardStatus(channel)){
             System.out.println("Bitcoin Wallet on this card is not initialized. Please define a PIN to initialize it:");
-            String pin = "1234";//scanner.nextLine();
-            initializeWallet(channel, Integer.parseInt(pin));
+            String newPin = "1234";//scanner.nextLine();
+            initializeWallet(channel, Integer.parseInt(newPin));
         }
+/*
+        System.out.println("-------------- PIN Verification --------------");
+
+
+        CommandAPDU test = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xc2, 0x01, 0x01,
+                0x20,                   // Length of the data
+                0x00,                   // timeout
+                0x00,                   // timeout
+                (byte) 0x89,                   // format
+                0x47,                   // PIN block
+                0x04,                   // PIN length format
+                0x04,                   // Min pin size
+                0x04,                   // Max pin size
+                0x02,                   // Entry validation condition
+                0x01,                   // Number of messages to display
+                0x04, 0x09,             // English
+                0x00,                   // Message "Enter pin"
+                0x00, 0x00, 0x00,       // Non significant here
+                0x00, 0x00, 0x00, 0x0D, // Length of the apdu once formatted
+                (byte) CLA, INS_VERIFY_PIN, 0x00, 0x00, // APDU command VERIFY
+                0x08,                   // APDU command Data length
+                0x20,                   // APDU command Control data + Effective PIN length
+                (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF // APDU command PIN + filler
+                });
+        channel.transmit(test);
+
+*/
+
+
+
+
 
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
@@ -78,6 +109,7 @@ public class Application {
             System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
             return;
         }
+
 
         System.out.println("Creating Transaction...");
         List<Transaction> txs = address.findProperTransactions(sAmount + FEE);
@@ -173,7 +205,7 @@ public class Application {
 
     private static CardTerminal initializeTerminal() throws NoSuchAlgorithmException, CardException {
         TerminalManager.fixPlatformPaths();
-        TerminalFactory factory = TerminalFactory.getInstance("PC/SC", null);
+        TerminalFactory factory = TerminalFactory.getDefault();
         CardTerminal terminal = factory.terminals().list().get(0);
         LoggingCardTerminal lct = LoggingCardTerminal.getInstance(terminal);
         return DEBUG ? lct : terminal;
