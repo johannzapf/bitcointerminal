@@ -1,6 +1,7 @@
 package de.johannzapf.bitcoin.terminal;
 
 import apdu4j.pcsc.PinPadTerminal;
+import apdu4j.pcsc.SCard;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
@@ -10,10 +11,12 @@ import de.johannzapf.bitcoin.terminal.service.AddressService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import de.johannzapf.bitcoin.terminal.util.Util;
+import jnasmartcardio.Smartcardio;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -64,11 +67,14 @@ public class Application {
             String newPin = "1234";//scanner.nextLine();
             initializeWallet(channel, Integer.parseInt(newPin));
         }
-/*
+
         System.out.println("-------------- PIN Verification --------------");
 
+        int CM_IOCTL_GET_FEATURE_REQUEST = SCard.CARD_CTL_CODE(3400);
+        byte[] resp1 = card.transmitControlCommand(CM_IOCTL_GET_FEATURE_REQUEST, new byte[0]);
 
-        CommandAPDU test = new CommandAPDU(new byte[]{(byte) 0xff, (byte) 0xc2, 0x01, 0x01,
+
+        byte[] command = new byte[]{(byte) 0xff, (byte) 0xc2, 0x01, 0x01,
                 0x20,                   // Length of the data
                 0x00,                   // timeout
                 0x00,                   // timeout
@@ -87,10 +93,14 @@ public class Application {
                 0x08,                   // APDU command Data length
                 0x20,                   // APDU command Control data + Effective PIN length
                 (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF // APDU command PIN + filler
-                });
-        channel.transmit(test);
+        };
 
-*/
+        card.beginExclusive();
+        int CM_IOCTL_VERIFY_PIN = 0x42000DB2;
+        byte[] resp2 = card.transmitControlCommand(CM_IOCTL_VERIFY_PIN, command);
+        card.endExclusive();
+
+/*
 
 
 
@@ -135,7 +145,7 @@ public class Application {
         }
         String hash = TransactionService.broadcastTransaction(finalTransaction);
         System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
-
+*/
     }
 
     private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
