@@ -14,19 +14,9 @@ import java.util.List;
 
 public class TransactionService {
 
-
-    public static String createTransaction(SigningMessageTemplate smt, byte[] signature, byte[] pubKey) {
-        //Construct scriptSig
-        byte[] scriptSig = getScriptSig(signature, pubKey);
-        smt.setScriptSig(scriptSig);
-        smt.setInScriptLength(scriptSig.length);
-
-        return smt.toStringWithoutHashCode();
-    }
-
-    public static String createTransaction(MultiSigningMessageTemplate msmt, List<byte[]> signatures,
+    public static String createTransaction(Transaction tx, List<byte[]> signatures,
                                            byte[] pubKey){
-        List<TransactionInput> inputs = msmt.getInputs();
+        List<TransactionInput> inputs = tx.getInputs();
         if(inputs.size() != signatures.size()){
             throw new PaymentFailedException("Signature count does not match");
         }
@@ -37,7 +27,7 @@ public class TransactionService {
             inputs.get(i++).setInScriptLength(scriptSig.length);
         }
 
-        return msmt.toString();
+        return tx.toString();
     }
 
     private static byte[] getScriptSig(byte[] signature, byte[] pubKey){

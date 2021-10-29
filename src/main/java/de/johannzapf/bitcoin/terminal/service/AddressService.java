@@ -2,7 +2,7 @@ package de.johannzapf.bitcoin.terminal.service;
 
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
-import de.johannzapf.bitcoin.terminal.objects.Transaction;
+import de.johannzapf.bitcoin.terminal.objects.UTXO;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import de.johannzapf.bitcoin.terminal.util.Util;
 import org.json.JSONArray;
@@ -37,13 +37,13 @@ public class AddressService {
             address.setUnconfirmedBalance(satoshiToBTC(addr.getInt("unconfirmed_balance")));
             address.setFinalBalance(satoshiToBTC(addr.getInt("final_balance")));
 
-            List<Transaction> transactions = new ArrayList<>();
+            List<UTXO> UTXOs = new ArrayList<>();
 
             if(addr.has("txrefs")) {
                 JSONArray txs = addr.getJSONArray("txrefs");
                 for (int i = 0; i < txs.length(); i++) {
                     JSONObject tx = txs.getJSONObject(i);
-                    transactions.add(new Transaction(tx.getString("tx_hash"), (byte) tx.getInt("tx_output_n"),
+                    UTXOs.add(new UTXO(tx.getString("tx_hash"), (byte) tx.getInt("tx_output_n"),
                             tx.getString("script"), tx.getInt("value")));
                 }
             }
@@ -51,11 +51,11 @@ public class AddressService {
                 JSONArray txsu = addr.getJSONArray("unconfirmed_txrefs");
                 for (int i = 0; i < txsu.length(); i++) {
                     JSONObject tx = txsu.getJSONObject(i);
-                    transactions.add(new Transaction(tx.getString("tx_hash"), (byte) tx.getInt("tx_output_n"),
+                    UTXOs.add(new UTXO(tx.getString("tx_hash"), (byte) tx.getInt("tx_output_n"),
                             tx.getString("script"), tx.getInt("value")));
                 }
             }
-            address.setTransactions(transactions.stream().sorted(Comparator.comparingInt(Transaction::getAmount).reversed()).collect(Collectors.toList()));
+            address.setUTXOs(UTXOs.stream().sorted(Comparator.comparingInt(UTXO::getAmount).reversed()).collect(Collectors.toList()));
             return address;
         } catch (IOException e) {
             throw new PaymentFailedException("Blockcypher API Failed", e);

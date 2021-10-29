@@ -18,13 +18,13 @@ public class Address {
     private double unconfirmedBalance;
     private double finalBalance;
 
-    private List<Transaction> transactions;
+    private List<UTXO> UTXOs;
 
 
-    public List<Transaction> findProperTransactions(int amount) throws PaymentFailedException {
-        List<Transaction> txs = new ArrayList<>();
-        int am = 0;
-        for(Transaction t : transactions){
+    public List<UTXO> findProperUTXOs(long amount) throws PaymentFailedException {
+        List<UTXO> txs = new ArrayList<>();
+        long am = 0;
+        for(UTXO t : UTXOs){
             if(am < amount){
                 txs.add(t);
                 am += t.getAmount();

@@ -4,12 +4,19 @@ import org.bitcoinj.core.NetworkParameters;
 
 public class Constants {
 
+    //SETTINGS
     public static final boolean TESTNET = true;
 
-    public static final int FEE = 6000; //Satoshis
+    public static final boolean AUTO_BROADCAST = false;
+
+    public static final boolean DEBUG = false;
+
+    public static final long FEE = 6000; //Satoshis
 
     public static final long CARD_READER_TIMEOUT = 60000;
-    public static final boolean DEBUG = true;
+
+
+    //OTHER CONSTANTS
 
     public static final byte[] APPLET_AID = new byte[]{1,2,3,4,5,6,7,8,9,0,5};
 
@@ -18,9 +25,10 @@ public class Constants {
     public static final int INS_CONN_MODE = 0x01;
     public static final int INS_STATUS = 0x02;
     public static final int INS_INIT = 0x03;
-    public static final int INS_GET_PUBKEY = 0x04;
+    public static final int INS_VERIFY_PIN = 0x04;
     public static final int INS_GET_ADDR = 0x05;
-    public static final int INS_PAY = 0x06;
+    public static final int INS_SIGN = 0x06;
+    public static final int INS_GET_PUBKEY = 0x07;
 
     public static final int P1_MAINNET = 0x01;
     public static final int P1_TESTNET = 0x02;

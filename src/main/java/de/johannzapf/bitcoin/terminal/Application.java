@@ -1,14 +1,11 @@
 package de.johannzapf.bitcoin.terminal;
 
-import apdu4j.pcsc.PinPadTerminal;
-import apdu4j.pcsc.SCard;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
-import de.johannzapf.bitcoin.terminal.objects.MultiSigningMessageTemplate;
-import de.johannzapf.bitcoin.terminal.objects.SigningMessageTemplate;
 import de.johannzapf.bitcoin.terminal.objects.Transaction;
+import de.johannzapf.bitcoin.terminal.objects.UTXO;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
@@ -25,8 +22,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0006;
-    private static String targetAddress = "muU9RtG1cwqgNSg4xv2hD7yA737YcPRLSc";
+    private static double amount = 0.0152;
+    private static String targetAddress = "mqor5z74XnX6rKPztY2L8hW48oYPH5hZwB";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -50,9 +47,6 @@ public class Application {
         Card card = terminal.connect("*");
         CardChannel channel = card.getBasicChannel();
 
-        System.out.println("-------------- PIN Verification --------------");
-
-
         if(!selectApplet(channel)){
             System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
             return;
@@ -68,7 +62,6 @@ public class Application {
             initializeWallet(channel, Integer.parseInt(pin));
         }
 
-        System.out.println("-------------- PIN Verification --------------");
 
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
@@ -87,47 +80,38 @@ public class Application {
         }
 
         System.out.println("Creating Transaction...");
-        List<Transaction> txs = address.findProperTransactions(sAmount + FEE);
-        System.out.println("Transaction requires " + txs.size() + " input(s)");
-        String finalTransaction;
+        List<UTXO> utxos = address.findProperUTXOs(sAmount + FEE);
+        System.out.println("Transaction requires " + utxos.size() + " input(s)");
 
-        if(txs.size() == 1){
-            SigningMessageTemplate smt = new SigningMessageTemplate(txs.get(0), sAmount, targetAddress, address.getAddress());
-            System.out.print("Sending to Smartcard for approval...");
+        Transaction tx = new Transaction(utxos, sAmount, targetAddress, address.getAddress());
+        List<byte[]> signatures = new ArrayList<>(utxos.size());
 
-            byte[] signature = sendTransaction(channel, smt.doubleHash());
-            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-            System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
 
-            finalTransaction = TransactionService.createTransaction(smt, signature, pubKey);
-
-        } else {
-            MultiSigningMessageTemplate msmt = new MultiSigningMessageTemplate(txs, sAmount, targetAddress, address.getAddress());
-            System.out.print("Sending to Smartcard for approval...");
-
-            List<byte[]> signatures = new ArrayList<>(txs.size());
-
-            for(byte[] toSign : msmt.toSign()){
-                signatures.add(sendTransaction(channel, toSign));
-            }
-
-            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-            System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
-
-            finalTransaction = TransactionService.createTransaction(msmt, signatures, pubKey);
+        System.out.print("Sending to Smartcard for approval...");
+        for(byte[] toSign : tx.toSign()){
+            signatures.add(signTransaction(channel, toSign));
         }
 
+        double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
+        System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
+
+        String finalTransaction = TransactionService.createTransaction(tx, signatures, pubKey);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
-        System.out.println("Broadcast Transaction to P2P Network (y/n)?");
-        if(scanner.nextLine().equals("y")){
-            String hash = TransactionService.broadcastTransaction(finalTransaction);
-            System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
+
+
+        if(!AUTO_BROADCAST){
+            System.out.println("Broadcast Transaction to P2P Network (y/n)?");
+            if(!scanner.nextLine().equals("y")){
+                return;
+            }
         }
+        String hash = TransactionService.broadcastTransaction(finalTransaction);
+        System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
     }
 
-    private static byte[] sendTransaction(CardChannel channel, byte[] transaction) throws CardException{
-        CommandAPDU pay = new CommandAPDU(CLA, INS_PAY, 0x00, 0x00, transaction);
-        ResponseAPDU res = channel.transmit(pay);
+    private static byte[] signTransaction(CardChannel channel, byte[] transaction) throws CardException{
+        CommandAPDU sign = new CommandAPDU(CLA, INS_SIGN, 0x00, 0x00, transaction);
+        ResponseAPDU res = channel.transmit(sign);
         if(isSuccessful(res)){
             byte[] data = res.getData();
             return data;

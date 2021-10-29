@@ -15,7 +15,7 @@ public class TransactionInput {
     private byte[] sequence = {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff};
 
 
-    public TransactionInput(Transaction inputTransaction){
+    public TransactionInput(UTXO inputTransaction){
         byte[] outputScriptPubKey1 = Util.hexStringToByteArray(inputTransaction.getOutputPubKey());
         this.previousTxHash = reverse(Util.hexStringToByteArray(inputTransaction.getHash()));
         this.previousOutputIndex[0] = inputTransaction.getIndex();
