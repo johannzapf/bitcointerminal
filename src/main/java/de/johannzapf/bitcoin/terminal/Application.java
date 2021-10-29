@@ -143,7 +143,7 @@ public class Application {
     }
 
     private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
-        CommandAPDU pay = new CommandAPDU(CLA, INS_PAY, 0x00, 0x00, params);
+        CommandAPDU pay = new CommandAPDU(CLA, INS_CREATE_TRANSACTION, 0x00, 0x00, params);
         ResponseAPDU res = channel.transmit(pay);
         if(isSuccessful(res)){
             byte[] data = res.getData();
