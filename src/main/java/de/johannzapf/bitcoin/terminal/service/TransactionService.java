@@ -1,7 +1,7 @@
 package de.johannzapf.bitcoin.terminal.service;
 
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
-import de.johannzapf.bitcoin.terminal.objects.Transaction;
+import de.johannzapf.bitcoin.terminal.objects.UTXO;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import de.johannzapf.bitcoin.terminal.util.Util;
 import org.json.JSONObject;
@@ -19,12 +19,12 @@ import static de.johannzapf.bitcoin.terminal.util.Util.toHex;
 
 public class TransactionService {
 
-    public static byte[] constructTxParams(String targetAddress, long sAmount, List<Transaction> inputTransactions){
+    public static byte[] constructTxParams(String targetAddress, long sAmount, List<UTXO> inputTransactions){
         byte[] arg0 = getPubKeyHash(targetAddress);
         byte[] arg1 = Util.hexStringToByteArray(toHex(sAmount));
 
         int inAmount = 0;
-        for(Transaction t : inputTransactions){
+        for(UTXO t : inputTransactions){
             inAmount += t.getAmount();
         }
         byte[] arg2 = Util.hexStringToByteArray(Util.toHex(inAmount - sAmount - FEE));

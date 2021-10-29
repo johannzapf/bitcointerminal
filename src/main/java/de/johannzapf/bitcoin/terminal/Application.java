@@ -1,22 +1,18 @@
 package de.johannzapf.bitcoin.terminal;
 
-import apdu4j.pcsc.PinPadTerminal;
-import apdu4j.pcsc.SCard;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
-import de.johannzapf.bitcoin.terminal.objects.Transaction;
+import de.johannzapf.bitcoin.terminal.objects.UTXO;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import de.johannzapf.bitcoin.terminal.util.Util;
-import jnasmartcardio.Smartcardio;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -26,8 +22,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.001;
-    private static String targetAddress = "mfrWKVeFGxsCWafcTCATG2zhza3ovFXAUR";
+    private static double amount = 0.0026;
+    private static String targetAddress = "myDjS7mQWx3JhGXx1RoLpkQ6cg9CaRjhTF";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -68,6 +64,7 @@ public class Application {
             initializeWallet(channel, Integer.parseInt(newPin));
         }
 
+        /*
         System.out.println("-------------- PIN Verification --------------");
 
         int CM_IOCTL_GET_FEATURE_REQUEST = SCard.CARD_CTL_CODE(3400);
@@ -100,9 +97,7 @@ public class Application {
         byte[] resp2 = card.transmitControlCommand(CM_IOCTL_VERIFY_PIN, command);
         card.endExclusive();
 
-/*
-
-
+*/
 
 
 
@@ -120,15 +115,14 @@ public class Application {
             return;
         }
 
-
         System.out.println("Creating Transaction...");
-        List<Transaction> txs = address.findProperTransactions(sAmount + FEE);
-        System.out.println("Transaction requires " + txs.size() + " input(s)");
+        List<UTXO> utxos = address.findProperUTXOs(sAmount + FEE);
+        System.out.println("Transaction requires " + utxos.size() + " input(s)");
+
+        byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
 
 
         System.out.print("Sending to Smartcard for approval...");
-
-        byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, txs);
         byte[] transaction = createTransaction(channel, txParams);
 
         double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
@@ -136,6 +130,7 @@ public class Application {
 
         String finalTransaction = Util.bytesToHex(transaction);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
+
 
         if(!AUTO_BROADCAST){
             System.out.println("Broadcast Transaction to P2P Network (y/n)?");
@@ -145,7 +140,6 @@ public class Application {
         }
         String hash = TransactionService.broadcastTransaction(finalTransaction);
         System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
-*/
     }
 
     private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{

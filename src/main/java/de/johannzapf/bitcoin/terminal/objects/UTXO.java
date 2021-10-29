@@ -10,7 +10,7 @@ import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
-public class Transaction {
+public class UTXO {
 
     @ToString.Include
     private String hash;
