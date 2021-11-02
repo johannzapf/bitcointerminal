@@ -22,7 +22,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0135;
+    private static double amount = 0.01;
     private static String targetAddress = "myDjS7mQWx3JhGXx1RoLpkQ6cg9CaRjhTF";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -117,23 +117,15 @@ public class Application {
 
         System.out.println("Creating Transaction...");
         List<UTXO> utxos = address.findProperUTXOs(sAmount + FEE);
+        if(utxos.size() > 3){
+            throw new PaymentFailedException("No support for Transactions with more than three inputs");
+        }
         System.out.println("Transaction requires " + utxos.size() + " input(s)");
 
         byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
 
-
         System.out.println("Sending to Smartcard for approval...: " + bytesToHex(txParams));
-        //byte[] transaction = createTransaction(channel, txParams);
-
-        byte[] transaction = new byte[1];
-        for(int i = 1; i < 20; i++){
-            try{
-                transaction = createTransaction(channel, txParams);
-                System.out.println(i + ": " + bytesToHex(transaction));
-            } catch(PaymentFailedException e){
-                System.err.println(i + ": " + e.getMessage());
-            }
-        }
+        byte[] transaction = createTransaction(channel, txParams);
 
         double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
         System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
