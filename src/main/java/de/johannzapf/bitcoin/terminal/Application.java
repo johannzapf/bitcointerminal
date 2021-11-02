@@ -159,7 +159,11 @@ public class Application {
         CommandAPDU version = new CommandAPDU(CLA, INS_VERSION, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(version);
         if(isSuccessful(res)){
-            System.out.println(">> Version: " + hexToAscii(res.getData()));
+            String ver = hexToAscii(res.getData());
+            System.out.println(">> Version: " + ver);
+            if(ver.charAt(4) != 'T'){
+                throw new PaymentFailedException("This Bitcoin Wallet Applet is not compatible with this version of Terminal");
+            }
         } else {
             throw new PaymentFailedException("Card Version returned " + Integer.toHexString(res.getSW()));
         }
