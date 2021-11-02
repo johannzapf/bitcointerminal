@@ -22,8 +22,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0152;
-    private static String targetAddress = "mqor5z74XnX6rKPztY2L8hW48oYPH5hZwB";
+    private static double amount = 0.005;
+    private static String targetAddress = "mseEAdcDqJTry4AwYnbgV8s8rmDZnmY4TX";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
@@ -180,7 +180,7 @@ public class Application {
         if(isSuccessful(res)){
             return res.getData();
         } else {
-            throw new PaymentFailedException("Error getting address");
+            throw new PaymentFailedException("Error getting public key");
         }
     }
 
