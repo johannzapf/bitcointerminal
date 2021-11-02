@@ -22,7 +22,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.01;
+    private static double amount = 0.005;
     private static String targetAddress = "myDjS7mQWx3JhGXx1RoLpkQ6cg9CaRjhTF";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -124,7 +124,7 @@ public class Application {
 
         byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
 
-        System.out.println("Sending to Smartcard for approval...: " + bytesToHex(txParams));
+        System.out.println("Sending to Smartcard for approval...");
         byte[] transaction = createTransaction(channel, txParams);
 
         double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
