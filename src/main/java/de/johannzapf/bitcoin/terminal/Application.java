@@ -35,26 +35,40 @@ public class Application {
         //readPaymentParams();
 
         System.out.println("-------------- Connecting to Card --------------");
+        Card card;
+        CardChannel channel;
+        long start;
+        do{
+            System.out.println("Waiting for Card...");
+            if (!terminal.waitForCardPresent(CARD_READER_TIMEOUT)) {
+                System.out.println("ERROR: Terminal timeout");
+                return;
+            }
 
-        System.out.println("Waiting for Card...");
-        if(!terminal.waitForCardPresent(CARD_READER_TIMEOUT)){
-            System.out.println("ERROR: Terminal timeout");
-            return;
-        }
+            start = System.nanoTime();
 
-        long start = System.nanoTime();
+            card = terminal.connect("*");
+            channel = card.getBasicChannel();
 
-        Card card = terminal.connect("*");
-        CardChannel channel = card.getBasicChannel();
+            if (!selectApplet(channel)) {
+                System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
+                return;
+            }
+            System.out.println("Card successfully connected.");
 
-        if(!selectApplet(channel)){
-            System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
-            return;
-        }
-        System.out.println("Card successfully connected.");
+            if (!version(channel)) {
+                System.out.println("This card is not compatible with a signature-only terminal");
+                terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+                continue;
+            }
 
-        version(channel);
-        connectionMode(channel);
+            if (!connectionMode(channel) && amount > 0.002) {
+                System.out.println("Please insert your Card for amounts greater than 0.002 BTC");
+                terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+            } else {
+                break;
+            }
+        } while (true);
 
         if(!cardStatus(channel)){
             System.out.println("Bitcoin Wallet on this card is not initialized. Please define a PIN to initialize it:");
@@ -120,28 +134,28 @@ public class Application {
         }
     }
 
-    private static void version(CardChannel channel) throws CardException {
+    private static boolean version(CardChannel channel) throws CardException {
         CommandAPDU version = new CommandAPDU(CLA, INS_VERSION, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(version);
         if(isSuccessful(res)){
             String ver = hexToAscii(res.getData());
             System.out.println(">> Version: " + ver);
-            if(ver.charAt(4) != 'S'){
-                throw new PaymentFailedException("This Bitcoin Wallet Applet is not compatible with this version of Terminal");
-            }
+            return ver.charAt(4) == 'S';
         } else {
             throw new PaymentFailedException("Card Version returned " + Arrays.toString(res.getData()));
         }
     }
 
-    private static void connectionMode(CardChannel channel) throws CardException {
+    private static boolean connectionMode(CardChannel channel) throws CardException {
         CommandAPDU conn = new CommandAPDU(CLA, INS_CONN_MODE, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(conn);
         if(isSuccessful(res)){
             if(res.getData()[0] == (byte) 0){
                 System.out.println("Card is connected physically");
+                return true;
             } else {
                 System.out.println("Card is connected via NFC");
+                return false;
             }
         } else {
             throw new PaymentFailedException("Card Hello returned " + Arrays.toString(res.getData()));
