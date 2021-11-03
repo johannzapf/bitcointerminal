@@ -1,5 +1,6 @@
 package de.johannzapf.bitcoin.terminal;
 
+import apdu4j.pcsc.SCard;
 import apdu4j.pcsc.TerminalManager;
 import apdu4j.pcsc.terminals.LoggingCardTerminal;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
@@ -36,27 +37,40 @@ public class Application {
         //readPaymentParams();
 
         System.out.println("-------------- Connecting to Card --------------");
+        Card card;
+        CardChannel channel;
+        long start;
+        do{
+            System.out.println("Waiting for Card...");
+            if (!terminal.waitForCardPresent(CARD_READER_TIMEOUT)) {
+                System.out.println("ERROR: Terminal timeout");
+                return;
+            }
 
-        System.out.println("Waiting for Card...");
-        if(!terminal.waitForCardPresent(CARD_READER_TIMEOUT)){
-            System.out.println("ERROR: Terminal timeout");
-            return;
-        }
+            start = System.nanoTime();
 
-        long start = System.nanoTime();
+            card = terminal.connect("*");
+            channel = card.getBasicChannel();
 
-        Card card = terminal.connect("*");
-        CardChannel channel = card.getBasicChannel();
+            if (!selectApplet(channel)) {
+                System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
+                return;
+            }
+            System.out.println("Card successfully connected.");
 
+            if (!version(channel)) {
+                System.out.println("This card is only compatible with a signature-only terminal");
+                terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+                continue;
+            }
 
-        if(!selectApplet(channel)){
-            System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
-            return;
-        }
-        System.out.println("Card successfully connected.");
-
-        version(channel);
-        connectionMode(channel);
+            if (!connectionMode(channel) && amount > 0.002) {
+                System.out.println("Please insert your Card for amounts greater than 0.002 BTC");
+                terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+            } else {
+                break;
+            }
+        } while (true);
 
         if(!cardStatus(channel)){
             System.out.println("Bitcoin Wallet on this card is not initialized. Please define a PIN to initialize it:");
@@ -64,20 +78,19 @@ public class Application {
             initializeWallet(channel, Integer.parseInt(newPin));
         }
 
-        /*
+/*
         System.out.println("-------------- PIN Verification --------------");
 
         int CM_IOCTL_GET_FEATURE_REQUEST = SCard.CARD_CTL_CODE(3400);
         byte[] resp1 = card.transmitControlCommand(CM_IOCTL_GET_FEATURE_REQUEST, new byte[0]);
 
 
-        byte[] command = new byte[]{(byte) 0xff, (byte) 0xc2, 0x01, 0x01,
-                0x20,                   // Length of the data
+        byte[] command = new byte[]{
                 0x00,                   // timeout
                 0x00,                   // timeout
-                (byte) 0x89,                   // format
-                0x47,                   // PIN block
+                (byte) 0x82,                   // format
                 0x04,                   // PIN length format
+                0x00,
                 0x04,                   // Min pin size
                 0x04,                   // Max pin size
                 0x02,                   // Entry validation condition
@@ -85,21 +98,15 @@ public class Application {
                 0x04, 0x09,             // English
                 0x00,                   // Message "Enter pin"
                 0x00, 0x00, 0x00,       // Non significant here
-                0x00, 0x00, 0x00, 0x0D, // Length of the apdu once formatted
+                0x0D, 0x00, 0x00, 0x00, // Length of the apdu once formatted
                 (byte) CLA, INS_VERIFY_PIN, 0x00, 0x00, // APDU command VERIFY
                 0x08,                   // APDU command Data length
-                0x20,                   // APDU command Control data + Effective PIN length
                 (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF // APDU command PIN + filler
         };
 
-        card.beginExclusive();
-        int CM_IOCTL_VERIFY_PIN = 0x42000DB2;
-        byte[] resp2 = card.transmitControlCommand(CM_IOCTL_VERIFY_PIN, command);
-        card.endExclusive();
-
+        int CM_IOCTL_VERIFY_PIN_REQUEST = 0x42000DB2;//SCard.CARD_CTL_CODE(2600);
+        byte[] resp2 = card.transmitControlCommand(CM_IOCTL_VERIFY_PIN_REQUEST, command);
 */
-
-
 
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
@@ -142,6 +149,8 @@ public class Application {
         }
         String hash = TransactionService.broadcastTransaction(finalTransaction);
         System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
+
+
     }
 
     private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
@@ -155,28 +164,28 @@ public class Application {
         }
     }
 
-    private static void version(CardChannel channel) throws CardException {
+    private static boolean version(CardChannel channel) throws CardException {
         CommandAPDU version = new CommandAPDU(CLA, INS_VERSION, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(version);
         if(isSuccessful(res)){
             String ver = hexToAscii(res.getData());
             System.out.println(">> Version: " + ver);
-            if(ver.charAt(4) != 'T'){
-                throw new PaymentFailedException("This Bitcoin Wallet Applet is not compatible with this version of Terminal");
-            }
+            return ver.charAt(4) == 'T';
         } else {
             throw new PaymentFailedException("Card Version returned " + Integer.toHexString(res.getSW()));
         }
     }
 
-    private static void connectionMode(CardChannel channel) throws CardException {
+    private static boolean connectionMode(CardChannel channel) throws CardException {
         CommandAPDU conn = new CommandAPDU(CLA, INS_CONN_MODE, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(conn);
         if(isSuccessful(res)){
             if(res.getData()[0] == (byte) 0){
                 System.out.println("Card is connected physically");
+                return true;
             } else {
                 System.out.println("Card is connected via NFC");
+                return false;
             }
         } else {
             throw new PaymentFailedException("Card Hello returned " + Arrays.toString(res.getData()));
