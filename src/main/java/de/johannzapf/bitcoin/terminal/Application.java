@@ -23,7 +23,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.005;
+    private static double amount = 0.0378;
     private static String targetAddress = "myDjS7mQWx3JhGXx1RoLpkQ6cg9CaRjhTF";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -117,13 +117,13 @@ public class Application {
         Address address = AddressService.getAddressInfo(btcAddress);
         System.out.println("Available Balance in this Wallet: " + address.getFinalBalance() +
                 " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
-        if(BTCToSatoshi(address.getFinalBalance()) < FEE + sAmount) {
+
+        List<UTXO> utxos = address.findProperUTXOs(sAmount);
+
+        if(BTCToSatoshi(address.getFinalBalance()) < calculateFee(utxos.size()) + sAmount) {
             System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
             return;
         }
-
-        System.out.println("Creating Transaction...");
-        List<UTXO> utxos = address.findProperUTXOs(sAmount + FEE);
         if(utxos.size() > 3){
             throw new PaymentFailedException("No support for Transactions with more than three inputs");
         }
@@ -135,7 +135,7 @@ public class Application {
         byte[] transaction = createTransaction(channel, txParams);
 
         double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-        System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
+        System.out.println("You can remove your card (" + format.format(elapsed) + " Seconds)");
 
         String finalTransaction = Util.bytesToHex(transaction);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);

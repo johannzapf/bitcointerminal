@@ -19,6 +19,12 @@ public class Util {
         return Math.round(btc*100000000);
     }
 
+    public static long calculateFee(int inputsAmount){
+        //The length of a transaction is about 80 + 180 * amount of inputs (it can vary a little)
+        int transactionSize = inputsAmount * 180 + 80;
+        return transactionSize * Constants.FEE;
+    }
+
     public static byte[] getPubKeyHash(String address){
         return Address.fromString(Constants.netParams, address).getHash();
     }

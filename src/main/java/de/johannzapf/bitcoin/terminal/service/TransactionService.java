@@ -14,8 +14,7 @@ import java.net.http.HttpResponse;
 import java.util.List;
 
 import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
-import static de.johannzapf.bitcoin.terminal.util.Util.getPubKeyHash;
-import static de.johannzapf.bitcoin.terminal.util.Util.toHex;
+import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class TransactionService {
 
@@ -27,7 +26,7 @@ public class TransactionService {
         for(UTXO t : inputTransactions){
             inAmount += t.getAmount();
         }
-        byte[] arg2 = Util.hexStringToByteArray(Util.toHex(inAmount - sAmount - FEE));
+        byte[] arg2 = Util.hexStringToByteArray(Util.toHex(inAmount - sAmount - calculateFee(inputTransactions.size())));
 
         int arraySize = 37 + 58 * inputTransactions.size();
         byte[] params = new byte[arraySize];
