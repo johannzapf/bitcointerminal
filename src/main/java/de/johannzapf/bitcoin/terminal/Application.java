@@ -62,8 +62,8 @@ public class Application {
                 continue;
             }
 
-            if (!connectionMode(channel) && amount > 0.002) {
-                System.out.println("Please insert your Card for amounts greater than 0.002 BTC");
+            if (!connectionMode(channel) && amount > CONTACTLESS_LIMIT) {
+                System.out.println("Please insert your Card for amounts greater than " + CONTACTLESS_LIMIT + " BTC");
                 terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
             } else {
                 break;
