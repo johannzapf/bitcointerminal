@@ -56,7 +56,7 @@ public class Transaction {
         for(UTXO t : inputTransactions){
             inAmount += t.getAmount();
         }
-        this.value2 = getValue(inAmount - outAmount - FEE);
+        this.value2 = getValue(inAmount - outAmount - Util.calculateFee(inputTransactions.size()));
         this.outScriptLength2 = pubKeyHash2.length + 5;
         this.scriptPubKey2 = constructScriptPubKey(pubKeyHash2, pubKeyHash1.length + 5);
     }

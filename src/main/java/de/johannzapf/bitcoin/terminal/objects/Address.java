@@ -1,6 +1,7 @@
 package de.johannzapf.bitcoin.terminal.objects;
 
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
+import de.johannzapf.bitcoin.terminal.util.Util;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,7 +26,7 @@ public class Address {
         List<UTXO> txs = new ArrayList<>();
         long am = 0;
         for(UTXO t : UTXOs){
-            if(am < amount){
+            if(am < amount + Util.calculateFee(txs.size())){
                 txs.add(t);
                 am += t.getAmount();
             }

@@ -13,7 +13,7 @@ public class Constants {
 
     public static final double CONTACTLESS_LIMIT = 0.002; // BTC
 
-    public static final long FEE = 6000; //Satoshis
+    public static final long FEE = 15; //Satoshis per byte
 
     public static final long CARD_READER_TIMEOUT = 60000;
 

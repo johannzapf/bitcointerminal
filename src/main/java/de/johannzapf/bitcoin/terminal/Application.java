@@ -88,26 +88,27 @@ public class Application {
         Address address = AddressService.getAddressInfo(btcAddress);
         System.out.println("Available Balance in this Wallet: " + address.getFinalBalance() +
                 " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
-        if(BTCToSatoshi(address.getFinalBalance()) < FEE + sAmount) {
+
+        List<UTXO> utxos = address.findProperUTXOs(sAmount);
+
+        if(BTCToSatoshi(address.getFinalBalance()) < calculateFee(utxos.size()) + sAmount) {
             System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
             return;
         }
 
-        System.out.println("Creating Transaction...");
-        List<UTXO> utxos = address.findProperUTXOs(sAmount + FEE);
         System.out.println("Transaction requires " + utxos.size() + " input(s)");
 
         Transaction tx = new Transaction(utxos, sAmount, targetAddress, address.getAddress());
         List<byte[]> signatures = new ArrayList<>(utxos.size());
 
 
-        System.out.print("Sending to Smartcard for approval...");
+        System.out.println("Sending to Smartcard for approval...");
         for(byte[] toSign : tx.toSign()){
             signatures.add(signTransaction(channel, toSign));
         }
 
         double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-        System.out.println("\nYou can remove your card (" + format.format(elapsed) + " Seconds)");
+        System.out.println("You can remove your card (" + format.format(elapsed) + " Seconds)");
 
         String finalTransaction = TransactionService.createTransaction(tx, signatures, pubKey);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
