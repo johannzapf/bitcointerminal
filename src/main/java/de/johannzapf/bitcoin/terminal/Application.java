@@ -23,8 +23,8 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.005;
-    private static String targetAddress = "mseEAdcDqJTry4AwYnbgV8s8rmDZnmY4TX";
+    private static double amount = 0.0099;
+    private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
