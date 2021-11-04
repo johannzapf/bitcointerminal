@@ -13,7 +13,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
-import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
 import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class TransactionService {

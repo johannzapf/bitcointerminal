@@ -3,7 +3,6 @@ package de.johannzapf.bitcoin.terminal.objects;
 import de.johannzapf.bitcoin.terminal.util.Util;
 import lombok.*;
 
-import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
 
 @Getter
 @Setter
