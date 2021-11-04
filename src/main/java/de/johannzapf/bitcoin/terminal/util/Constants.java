@@ -2,23 +2,9 @@ package de.johannzapf.bitcoin.terminal.util;
 
 import org.bitcoinj.core.NetworkParameters;
 
+import static de.johannzapf.bitcoin.terminal.Settings.TESTNET;
+
 public class Constants {
-
-    //SETTINGS
-    public static final boolean TESTNET = true;
-
-    public static final boolean AUTO_BROADCAST = false;
-
-    public static final boolean DEBUG = false;
-
-    public static final double CONTACTLESS_LIMIT = 0.002; // BTC
-
-    public static final long FEE = 15; //Satoshis per byte
-
-    public static final long CARD_READER_TIMEOUT = 60000;
-
-
-    //OTHER CONSTANTS
 
     public static final byte[] APPLET_AID = new byte[]{1,2,3,4,5,6,7,8,9,0,5};
 

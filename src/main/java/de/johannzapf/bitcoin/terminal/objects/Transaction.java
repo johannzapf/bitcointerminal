@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.johannzapf.bitcoin.terminal.util.Constants.FEE;
 import static de.johannzapf.bitcoin.terminal.util.Util.*;
 import static de.johannzapf.bitcoin.terminal.util.Util.bytesToHex;
 
