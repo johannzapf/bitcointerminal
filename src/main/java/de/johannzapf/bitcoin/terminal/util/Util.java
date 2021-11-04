@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 
+import static de.johannzapf.bitcoin.terminal.Settings.FEE;
+
+
 public class Util {
 
     public static double satoshiToBTC(double satoshi){
@@ -22,7 +25,7 @@ public class Util {
     public static long calculateFee(int inputsAmount){
         //The length of a transaction is about 80 + 180 * amount of inputs (it can vary a little)
         int transactionSize = inputsAmount * 180 + 80;
-        return transactionSize * Constants.FEE;
+        return transactionSize * FEE;
     }
 
     public static byte[] getPubKeyHash(String address){

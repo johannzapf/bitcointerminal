@@ -19,6 +19,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import static de.johannzapf.bitcoin.terminal.util.Constants.*;
+import static de.johannzapf.bitcoin.terminal.Settings.*;
 import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
@@ -34,7 +35,9 @@ public class Application {
         System.out.println("-------- Initializing Payment Terminal --------");
         CardTerminal terminal = initializeTerminal();
         System.out.println("Terminal connected: " + terminal.getName());
-        //readPaymentParams();
+        if(PROMPT_FOR_PAYMENT_PARAMS) {
+            readPaymentParams();
+        }
 
         System.out.println("-------------- Connecting to Card --------------");
         Card card;
