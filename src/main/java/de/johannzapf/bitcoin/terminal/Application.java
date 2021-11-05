@@ -7,6 +7,7 @@ import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
 import de.johannzapf.bitcoin.terminal.objects.UTXO;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
+import de.johannzapf.bitcoin.terminal.service.PINService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import de.johannzapf.bitcoin.terminal.util.Util;
@@ -43,6 +44,7 @@ public class Application {
         Card card;
         CardChannel channel;
         long start;
+        boolean connectionMode;
         do{
             System.out.println("Waiting for Card...");
             if (!terminal.waitForCardPresent(CARD_READER_TIMEOUT)) {
@@ -53,6 +55,7 @@ public class Application {
             start = System.nanoTime();
 
             card = terminal.connect("*");
+            PINService.parseControlCodes(card);
             channel = card.getBasicChannel();
 
             if (!selectApplet(channel)) {
@@ -67,7 +70,9 @@ public class Application {
                 continue;
             }
 
-            if (!connectionMode(channel) && amount > CONTACTLESS_LIMIT) {
+            connectionMode = connectionMode(channel);
+
+            if (!connectionMode && amount > CONTACTLESS_LIMIT) {
                 System.out.println("Please insert your Card for amounts greater than " + CONTACTLESS_LIMIT + " BTC");
                 terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
             } else {
@@ -76,40 +81,22 @@ public class Application {
         } while (true);
 
         if(!cardStatus(channel)){
-            System.out.println("Bitcoin Wallet on this card is not initialized. Please define a PIN to initialize it:");
-            String newPin = "1234";//scanner.nextLine();
-            initializeWallet(channel, Integer.parseInt(newPin));
+            System.out.println("Initializing Bitcoin Wallet on this card...");
+            initializeWallet(channel);
+            System.out.println("Please set a PIN on the smart card reader");
+            PINService.setPin(card);
         }
 
-/*
-        System.out.println("-------------- PIN Verification --------------");
-
-        int CM_IOCTL_GET_FEATURE_REQUEST = SCard.CARD_CTL_CODE(3400);
-        byte[] resp1 = card.transmitControlCommand(CM_IOCTL_GET_FEATURE_REQUEST, new byte[0]);
 
 
-        byte[] command = new byte[]{
-                0x00,                   // timeout
-                0x00,                   // timeout
-                (byte) 0x82,                   // format
-                0x04,                   // PIN length format
-                0x00,
-                0x04,                   // Min pin size
-                0x04,                   // Max pin size
-                0x02,                   // Entry validation condition
-                0x01,                   // Number of messages to display
-                0x04, 0x09,             // English
-                0x00,                   // Message "Enter pin"
-                0x00, 0x00, 0x00,       // Non significant here
-                0x0D, 0x00, 0x00, 0x00, // Length of the apdu once formatted
-                (byte) CLA, INS_VERIFY_PIN, 0x00, 0x00, // APDU command VERIFY
-                0x08,                   // APDU command Data length
-                (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF, (byte) 0xFF // APDU command PIN + filler
-        };
+        if(connectionMode){
+            System.out.println("-------------- PIN Verification --------------");
+            System.out.println("Please enter your PIN");
+            PINService.verifyPin(card);
+        }
 
-        int CM_IOCTL_VERIFY_PIN_REQUEST = 0x42000DB2;//SCard.CARD_CTL_CODE(2600);
-        byte[] resp2 = card.transmitControlCommand(CM_IOCTL_VERIFY_PIN_REQUEST, command);
-*/
+
+        /*
 
         System.out.println("------------ Payment Process Start ------------");
         String btcAddress = getAddress(channel);
@@ -152,8 +139,7 @@ public class Application {
         }
         String hash = TransactionService.broadcastTransaction(finalTransaction);
         System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
-
-
+*/
     }
 
     private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
@@ -207,9 +193,8 @@ public class Application {
         }
     }
 
-    private static void initializeWallet(CardChannel channel, int pin) throws CardException {
-        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00,
-                ByteBuffer.allocate(4).putInt(pin).array());
+    private static void initializeWallet(CardChannel channel) throws CardException {
+        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00);
         if(!isSuccessful(channel.transmit(init))){
             throw new PaymentFailedException("Error initializing Wallet");
         }
