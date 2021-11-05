@@ -22,19 +22,18 @@ public class UTXO {
     private long amount;
 
     public byte[] asByteArray(){
-        byte argA = index;
-        byte[] argB = Util.hexStringToByteArray(hash);
-        byte[] argC = Util.hexStringToByteArray(outputPubKey);
+        byte[] prevTxHash = Util.hexStringToByteArray(hash);
+        byte[] outputPubkey = Util.hexStringToByteArray(outputPubKey);
 
         byte[] res = new byte[58];
-        res[0] = argA;
+        res[0] = index;
         int k = 0;
         for(int i = 1; i < 33; i++){
-            res[i] = argB[k++];
+            res[i] = prevTxHash[k++];
         }
         k = 0;
         for(int i = 33; i < 58; i++){
-            res[i] = argC[k++];
+            res[i] = outputPubkey[k++];
         }
         return res;
     }

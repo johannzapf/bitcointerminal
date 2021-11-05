@@ -18,38 +18,38 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 public class TransactionService {
 
     public static byte[] constructTxParams(String targetAddress, long sAmount, List<UTXO> inputTransactions){
-        byte[] arg0 = getPubKeyHash(targetAddress);
-        byte[] arg1 = Util.hexStringToByteArray(toHex(sAmount));
+        byte[] targetAddressPKH = getPubKeyHash(targetAddress);
+        byte[] amount = Util.hexStringToByteArray(toHex(sAmount));
 
         int inAmount = 0;
         for(UTXO t : inputTransactions){
             inAmount += t.getAmount();
         }
-        byte[] arg2 = Util.hexStringToByteArray(Util.toHex(inAmount - sAmount - calculateFee(inputTransactions.size())));
+        byte[] change = Util.hexStringToByteArray(Util.toHex(inAmount - sAmount - calculateFee(inputTransactions.size())));
 
         int arraySize = 37 + 58 * inputTransactions.size();
         byte[] params = new byte[arraySize];
 
         int k = 0;
         for(int i = 0; i < 20; i++){
-            params[i] = arg0[k++];
+            params[i] = targetAddressPKH[k++];
         }
         k = 0;
-        for(int i = 20 + (8-arg1.length); i < 28; i++){
-            params[i] = arg1[k++];
+        for(int i = 20 + (8-amount.length); i < 28; i++){
+            params[i] = amount[k++];
         }
         k = 0;
-        for(int i = 28 + (8-arg2.length); i < 36; i++){
-            params[i] = arg2[k++];
+        for(int i = 28 + (8-change.length); i < 36; i++){
+            params[i] = change[k++];
         }
 
         params[36] = (byte) inputTransactions.size();
 
         for(int j = 0; j < inputTransactions.size(); j++){
-            byte[] arg3 = inputTransactions.get(j).asByteArray();
+            byte[] inputTransaction = inputTransactions.get(j).asByteArray();
             k = 0;
             for(int i = 37; i < 95; i++){
-                params[i + j * 58] = arg3[k++];
+                params[i + j * 58] = inputTransaction[k++];
             }
         }
         return params;
