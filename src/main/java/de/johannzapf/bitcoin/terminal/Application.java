@@ -23,7 +23,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0099;
+    private static double amount = 0.0277;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -74,9 +74,41 @@ public class Application {
         } while (true);
 
         if(!cardStatus(channel)){
-            System.out.println("Bitcoin Wallet on this card is not initialized. Please define a PIN to initialize it:");
-            String pin = scanner.nextLine();
-            initializeWallet(channel, Integer.parseInt(pin));
+            System.out.println("Initializing Bitcoin Wallet on this card...");
+            initializeWallet(channel);
+            System.out.println("Please set a PIN on the smart card reader (Enter 0000 as old PIN)");
+            while(true){
+                byte[] res = PINService.modifyPin(card);
+                if(!bytesToHex(res).equals("9000")){
+                    System.out.println("You did not enter 0000 as the old PIN. Please try again.");
+                } else {
+                    break;
+                }
+            }
+        }
+
+        if(connectionMode){
+            System.out.println("-------------- PIN Verification --------------");
+            int tries = remainingPINTries(channel);
+            if(tries == 0){
+                System.out.println("Your card has been locked. Please contact the manufacturer.");
+                return;
+            }
+            System.out.println("Please enter your PIN (" + tries + " tries left)");
+            while(true){
+                byte[] res = PINService.verifyPin(card);
+                if(!bytesToHex(res).equals("9000")){
+                    tries = remainingPINTries(channel);
+                    if(tries == 0){
+                        System.out.println("Your card has been locked. Please contact the manufacturer.");
+                        return;
+                    } else {
+                        System.out.println("Wrong PIN, please try again (" + tries + " tries left)");
+                    }
+                } else {
+                    break;
+                }
+            }
         }
 
 
@@ -89,7 +121,7 @@ public class Application {
         int sAmount = BTCToSatoshi(amount);
 
         Address address = AddressService.getAddressInfo(btcAddress);
-        System.out.println("Available Balance in this Wallet: " + address.getFinalBalance() +
+        System.out.println("Available balance in this wallet: " + address.getFinalBalance() +
                 " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
 
         List<UTXO> utxos = address.findProperUTXOs(sAmount);
@@ -178,11 +210,20 @@ public class Application {
         }
     }
 
-    private static void initializeWallet(CardChannel channel, int pin) throws CardException {
-        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00,
-                ByteBuffer.allocate(4).putInt(pin).array());
+    private static void initializeWallet(CardChannel channel) throws CardException {
+        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00);
         if(!isSuccessful(channel.transmit(init))){
             throw new PaymentFailedException("Error initializing Wallet");
+        }
+    }
+
+    private static int remainingPINTries(CardChannel channel) throws CardException {
+        CommandAPDU status = new CommandAPDU(CLA, INS_PIN_REMAINING_TRIES, 0x00, 0x00, 0x01);
+        ResponseAPDU res = channel.transmit(status);
+        if(isSuccessful(res)){
+            return res.getData()[0];
+        } else {
+            throw new PaymentFailedException("Remaining PIN tries returned " + Arrays.toString(res.getData()));
         }
     }
 
@@ -208,7 +249,11 @@ public class Application {
 
     private static CardTerminal initializeTerminal() throws NoSuchAlgorithmException, CardException {
         TerminalManager.fixPlatformPaths();
-        TerminalFactory factory = TerminalFactory.getInstance("PC/SC", null);
+        TerminalFactory factory = TerminalFactory.getDefault();
+        List<CardTerminal> terminals = factory.terminals().list();
+        if(terminals.size() == 0){
+            throw new PaymentFailedException("No smart card reader found");
+        }
         CardTerminal terminal = factory.terminals().list().get(0);
         LoggingCardTerminal lct = LoggingCardTerminal.getInstance(terminal);
         return DEBUG ? lct : terminal;
