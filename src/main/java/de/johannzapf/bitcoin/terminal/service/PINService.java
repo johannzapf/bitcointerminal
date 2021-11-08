@@ -31,15 +31,15 @@ public class PINService {
         byte[] command = new byte[]{
                 0x00, //Timeout
                 0x00, //Timeout
-                0x01, //Format
+                0x00, //Format
                 0x0f, //PIN Block
                 0x00, //PIN length format
-                0x0f, //Max PIN size
+                0x04, //Max PIN size
                 0x04, //Min PIN size
                 0x02, //Entry validation condition (02 = press OK)
                 0x01, //Number of messages
-                0x09, //Language
                 0x04, //Language
+                0x09, //Language
                 0x00, //Message index
                 0x00, //TeoPrologue
                 0x00, 0x00,
@@ -52,7 +52,7 @@ public class PINService {
         byte[] command = new byte[]{
                 0x00, //Timeout
                 0x00, //Timeout
-                0x01, //Format
+                0x00, //Format
                 0x0f, //PIN Block
                 0x00, //PIN length format
                 0x00, //Offset for old PIN
@@ -62,41 +62,15 @@ public class PINService {
                 0x02, //Confirmation (2 = Old PIN + new PIN twice)
                 0x02, //Entry validation condition (2 = press OK)
                 (byte)0xff, //Number of messages
-                0x09, //Language
                 0x04, //Language
-                0x01, //Message index 1
-                0x01, //Message index 2
-                0x02, //Message index 3
+                0x09, //Language
+                0x00, //Message index 1
+                0x00, //Message index 2
+                0x00, //Message index 3
                 0x00, //TeoPrologue
                 0x00, 0x00,
                 0x04, 0x00, 0x00, 0x00, //APDU length
-                (byte) CLA, INS_MODIFY_PIN, P1_MODIFYPIN, 0x00};
-        return card.transmitControlCommand(CONTROL_CODE_MODIFY, command);
-    }
-
-    public static byte[] setPin(Card card) throws CardException {
-        byte[] command = new byte[]{
-                0x00, //Timeout
-                0x00, //Timeout
-                0x01, //Format
-                0x0f, //PIN Block
-                0x00, //PIN length format
-                0x00, //Offset for old PIN
-                0x00, //Offset for new PIN
-                0x04, //Max PIN size
-                0x04, //Min PIN size
-                0x01, //Confirmation (1 = no old PIN, enter new PIN twice)
-                0x02, //Entry validation condition (2 = press OK)
-                (byte)0xff, //Number of messages
-                0x09, //Language
-                0x04, //Language
-                0x01, //Message index 1
-                0x01, //Message index 2
-                0x02, //Message index 3
-                0x00, //TeoPrologue
-                0x00, 0x00,
-                0x04, 0x00, 0x00, 0x00, //APDU length
-                (byte) CLA, INS_MODIFY_PIN, P1_SETPIN, 0x00};
+                (byte) CLA, INS_MODIFY_PIN, 0x00, 0x00};
         return card.transmitControlCommand(CONTROL_CODE_MODIFY, command);
     }
 }

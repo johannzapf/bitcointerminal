@@ -16,14 +16,12 @@ public class Constants {
     public static final int INS_GET_ADDR = 0x05;
     public static final int INS_CREATE_TRANSACTION = 0x06;
 
+    public static final int INS_PIN_REMAINING_TRIES = 0x19;
     public static final int INS_VERIFY_PIN = 0x20;
     public static final int INS_MODIFY_PIN = 0x24;
 
     public static final int P1_MAINNET = 0x01;
     public static final int P1_TESTNET = 0x02;
-
-    public static final int P1_SETPIN = 0x01;
-    public static final int P1_MODIFYPIN = 0x02;
 
     public static final NetworkParameters netParams = TESTNET ? NetworkParameters.fromID(NetworkParameters.ID_TESTNET)
             : NetworkParameters.fromID(NetworkParameters.ID_MAINNET);
