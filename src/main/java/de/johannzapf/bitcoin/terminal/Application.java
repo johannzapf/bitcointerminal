@@ -7,6 +7,7 @@ import de.johannzapf.bitcoin.terminal.objects.Address;
 import de.johannzapf.bitcoin.terminal.objects.Transaction;
 import de.johannzapf.bitcoin.terminal.objects.UTXO;
 import de.johannzapf.bitcoin.terminal.service.AddressService;
+import de.johannzapf.bitcoin.terminal.service.PINService;
 import de.johannzapf.bitcoin.terminal.service.TransactionService;
 import de.johannzapf.bitcoin.terminal.util.Constants;
 import org.bitcoinj.core.Base58;
@@ -23,7 +24,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0277;
+    private static double amount = 0.0099;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -41,6 +42,7 @@ public class Application {
         Card card;
         CardChannel channel;
         long start;
+        boolean connectionMode;
         do{
             System.out.println("Waiting for Card...");
             if (!terminal.waitForCardPresent(CARD_READER_TIMEOUT)) {
@@ -51,6 +53,7 @@ public class Application {
             start = System.nanoTime();
 
             card = terminal.connect("*");
+            PINService.parseControlCodes(card);
             channel = card.getBasicChannel();
 
             if (!selectApplet(channel)) {
@@ -65,7 +68,9 @@ public class Application {
                 continue;
             }
 
-            if (!connectionMode(channel) && amount > CONTACTLESS_LIMIT) {
+            connectionMode = connectionMode(channel);
+
+            if (!connectionMode && amount > CONTACTLESS_LIMIT) {
                 System.out.println("Please insert your Card for amounts greater than " + CONTACTLESS_LIMIT + " BTC");
                 terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
             } else {
