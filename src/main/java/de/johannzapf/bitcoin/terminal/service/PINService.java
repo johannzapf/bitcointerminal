@@ -56,10 +56,10 @@ public class PINService {
                 0x0f, //PIN Block
                 0x00, //PIN length format
                 0x00, //Offset for old PIN
-                0x04, //Offset for new PIN
+                0x00, //Offset for new PIN
                 0x04, //Max PIN size
                 0x04, //Min PIN size
-                0x02, //Confirmation (2 = Old PIN + new PIN twice)
+                0x01, //Confirmation (2 = Old PIN + new PIN twice)
                 0x02, //Entry validation condition (2 = press OK)
                 (byte)0xff, //Number of messages
                 0x04, //Language
