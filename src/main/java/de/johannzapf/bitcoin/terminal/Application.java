@@ -13,7 +13,6 @@ import de.johannzapf.bitcoin.terminal.util.Constants;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
-import java.nio.ByteBuffer;
 import java.security.*;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -30,6 +29,13 @@ public class Application {
     private static Scanner scanner = new Scanner(System.in);
     private static DecimalFormat format = new DecimalFormat("#0.00");
 
+
+    /**
+     * The main method. Run this to start the payment terminal.
+     * @param args
+     * @throws CardException
+     * @throws NoSuchAlgorithmException
+     */
     public static void main(String[] args) throws CardException, NoSuchAlgorithmException {
         System.out.println("-------- Initializing Payment Terminal --------");
         CardTerminal terminal = initializeTerminal();
@@ -81,15 +87,8 @@ public class Application {
         if(!cardStatus(channel)){
             System.out.println("Initializing Bitcoin Wallet on this card...");
             initializeWallet(channel);
-            System.out.println("Please set a PIN on the smart card reader (Enter 0000 as old PIN)");
-            while(true){
-                byte[] res = PINService.modifyPin(card);
-                if(!bytesToHex(res).equals("9000")){
-                    System.out.println("You did not enter 0000 as the old PIN. Please try again.");
-                } else {
-                    break;
-                }
-            }
+            System.out.println("Please set a PIN on the smart card reader");
+            PINService.modifyPin(card);
         }
 
         if(connectionMode){
