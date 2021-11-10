@@ -13,7 +13,6 @@ import de.johannzapf.bitcoin.terminal.util.Util;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
-import java.security.*;
 import java.text.DecimalFormat;
 import java.util.*;
 
@@ -23,7 +22,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.003;
+    private static double amount = 0.0028;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -34,9 +33,8 @@ public class Application {
      * The main method. Run this method each time you want to process a new transaction.
      * @param args
      * @throws CardException
-     * @throws NoSuchAlgorithmException
      */
-    public static void main(String[] args) throws CardException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws CardException {
         System.out.println("-------- Initializing Payment Terminal --------");
         CardTerminal terminal = initializeTerminal();
         System.out.println("Terminal connected: " + terminal.getName());
@@ -69,14 +67,21 @@ public class Application {
                 continue;
             }
 
+            boolean connectionMode = connectionMode(channel);
+
             if(!cardStatus(channel)){
+                if(!connectionMode){
+                    System.out.println("Please insert the card into the card slot in order to initialize it.");
+                    terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+                    continue;
+                }
                 System.out.println("Please set a PIN on the smart card reader");
                 PINService.modifyPin(card);
                 System.out.println("Initializing Bitcoin Wallet on this card...");
                 initializeWallet(channel);
             }
 
-            if(connectionMode(channel)){
+            if(connectionMode){
                 System.out.println("-------------- PIN Verification --------------");
                 int tries = remainingPINTries(channel);
                 if(tries == 0){
