@@ -21,6 +21,10 @@ public class UTXO {
     @ToString.Include
     private long amount;
 
+    /**
+     * This method returns this UTXO in a form our card can understand.
+     * @return
+     */
     public byte[] asByteArray(){
         byte[] prevTxHash = Util.hexStringToByteArray(hash);
         byte[] outputPubkey = Util.hexStringToByteArray(outputPubKey);

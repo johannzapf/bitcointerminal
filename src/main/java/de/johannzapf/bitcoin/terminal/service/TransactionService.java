@@ -17,6 +17,13 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class TransactionService {
 
+    /**
+     * This method constructs the transaction parameters in the correct way for the card to understand them.
+     * @param targetAddress
+     * @param sAmount
+     * @param inputTransactions
+     * @return
+     */
     public static byte[] constructTxParams(String targetAddress, long sAmount, List<UTXO> inputTransactions){
         byte[] targetAddressPKH = getPubKeyHash(targetAddress);
         byte[] amount = Util.hexStringToByteArray(toHex(sAmount));
@@ -55,6 +62,11 @@ public class TransactionService {
         return params;
     }
 
+    /**
+     * Takes a raw transaction (as a hex string) and publishes it to the blockchain via the BlockCypher API.
+     * @param transaction
+     * @return
+     */
     public static String broadcastTransaction(String transaction) {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
