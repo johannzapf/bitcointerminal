@@ -82,10 +82,10 @@ public class Application {
         } while (true);
 
         if(!cardStatus(channel)){
-            System.out.println("Initializing Bitcoin Wallet on this card...");
-            initializeWallet(channel);
             System.out.println("Please set a PIN on the smart card reader");
             PINService.modifyPin(card);
+            System.out.println("Initializing Bitcoin Wallet on this card...");
+            initializeWallet(channel);
         }
 
         if(connectionMode){
