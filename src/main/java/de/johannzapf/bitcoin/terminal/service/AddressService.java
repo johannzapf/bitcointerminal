@@ -22,6 +22,12 @@ import static de.johannzapf.bitcoin.terminal.util.Util.satoshiToBTC;
 
 public class AddressService {
 
+    /**
+     * Returns an Address object for the given BTC Address.
+     * The method uses the BlockCypher API and parses information about the address balance and UTXOs.
+     * @param btcAddress
+     * @return
+     */
     public static Address getAddressInfo(String btcAddress) {
         try {
             URL url = new URL(Constants.BLOCKCYPHER_API + "/addrs/" + btcAddress +

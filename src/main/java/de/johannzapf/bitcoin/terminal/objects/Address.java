@@ -1,6 +1,5 @@
 package de.johannzapf.bitcoin.terminal.objects;
 
-import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.util.Util;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +21,12 @@ public class Address {
     private List<UTXO> UTXOs;
 
 
-    public List<UTXO> findProperUTXOs(long amount) throws PaymentFailedException {
+    /**
+     * Goes through all UTXOs and returns the minimum set of UTXOs needed to spent the given amount (including fees).
+     * @param amount
+     * @return
+     */
+    public List<UTXO> findProperUTXOs(long amount) {
         List<UTXO> txs = new ArrayList<>();
         long am = 0;
         for(UTXO t : UTXOs){

@@ -21,12 +21,23 @@ public class Util {
         return (int) Math.round(btc*100000000);
     }
 
+    /**
+     * Calculates a fee from the amount of inputs in a transaction.
+     * Makes use of the fact that, in our case, a transaction is about (80 + 180 * amount of inputs) bytes long.
+     * @param inputsAmount
+     * @return
+     */
     public static long calculateFee(int inputsAmount){
-        //The length of a transaction is about 80 + 180 * amount of inputs (it can vary a little)
         int transactionSize = inputsAmount * 180 + 80;
         return transactionSize * FEE;
     }
 
+    /**
+     * Parses the answer from a HttpURLConnection into a JSONObject.
+     * @param conn
+     * @return
+     * @throws IOException
+     */
     public static JSONObject parseJSON(HttpURLConnection conn) throws IOException {
         String res = "";
         BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream()));
@@ -37,6 +48,11 @@ public class Util {
         return new JSONObject(res);
     }
 
+    /**
+     * Converts an int value into a hex string (and appends leading zeros).
+     * @param i
+     * @return
+     */
     public static String toHex(int i){
         String s = Integer.toHexString(i);
         if(s.length() % 2 != 0){
@@ -45,6 +61,11 @@ public class Util {
         return s;
     }
 
+    /**
+     * Converts a short value to a hex string (and appends leading zeros).
+     * @param b
+     * @return
+     */
     public static String toHexString(short b){
         if(b <= 0x09){
             return "0" + b;
@@ -53,6 +74,11 @@ public class Util {
         }
     }
 
+    /**
+     * Reverses a byte array
+     * @param a
+     * @return
+     */
     public static byte[] reverse(byte[] a){
         byte[] reversed = new byte[a.length];
         for(int i = 0; i < a.length; i++){
@@ -61,6 +87,11 @@ public class Util {
         return reversed;
     }
 
+    /**
+     * Converts an array of bytes into a string ascii representation.
+     * @param hex
+     * @return
+     */
     public static String hexToAscii(byte[] hex){
         StringBuffer sb = new StringBuffer();
         for(byte b : hex){
@@ -69,6 +100,11 @@ public class Util {
         return sb.toString();
     }
 
+    /**
+     * Converts a hex string to an array of bytes.
+     * @param s
+     * @return
+     */
     public static byte[] hexStringToByteArray(String s) {
         int len = s.length();
         byte[] data = new byte[len / 2];
@@ -79,6 +115,12 @@ public class Util {
         return data;
     }
 
+    /**
+     * Converts an array of bytes to a hex string.
+     * Taken from stackoverflow (https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java).
+     * @param bytes
+     * @return
+     */
     public static String bytesToHex(byte[] bytes) {
         final char[] HEX_ARRAY = "0123456789abcdef".toCharArray();
         char[] hexChars = new char[bytes.length * 2];
@@ -89,4 +131,5 @@ public class Util {
         }
         return new String(hexChars);
     }
+
 }

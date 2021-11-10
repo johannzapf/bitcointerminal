@@ -1,7 +1,6 @@
 package de.johannzapf.bitcoin.terminal.service;
 
 import apdu4j.pcsc.SCard;
-import de.johannzapf.bitcoin.terminal.util.Util;
 
 import javax.smartcardio.Card;
 import javax.smartcardio.CardException;
@@ -14,6 +13,12 @@ public class PINService {
     private static int CONTROL_CODE_VERIFY;
     private static int CONTROL_CODE_MODIFY;
 
+    /**
+     * This method executes the GET_FEATURES command on our card.
+     * It extracts the control codes for PIN handling since these are different for different cards and environments.
+     * @param card
+     * @throws CardException
+     */
     public static void parseControlCodes(Card card) throws CardException {
         int CONTROL_CODE_GET_FEATURES = SCard.CARD_CTL_CODE(3400);
         byte[] res = card.transmitControlCommand(CONTROL_CODE_GET_FEATURES, new byte[0]);
@@ -27,6 +32,12 @@ public class PINService {
         }
     }
 
+    /**
+     * This method tells our smart card reader to verify a PIN and forward it to our CLA and INS_VERIFY_PIN
+     * @param card
+     * @return
+     * @throws CardException
+     */
     public static byte[] verifyPin(Card card) throws CardException {
         byte[] command = new byte[]{
                 0x00, //Timeout
@@ -48,6 +59,14 @@ public class PINService {
         return card.transmitControlCommand(CONTROL_CODE_VERIFY, command);
     }
 
+    /**
+     * This method tells our smart card reader to modify a PIN and forward it to our CLA and INS_MODIFY_PIN.
+     * It tells the reader to not ask for the old PIN since we only use this method for initial PIN setup.
+     * Our card prevents that this method is misused to change an already existing PIN.
+     * @param card
+     * @return
+     * @throws CardException
+     */
     public static byte[] modifyPin(Card card) throws CardException {
         byte[] command = new byte[]{
                 0x00, //Timeout
@@ -59,7 +78,7 @@ public class PINService {
                 0x00, //Offset for new PIN
                 0x04, //Max PIN size
                 0x04, //Min PIN size
-                0x01, //Confirmation (2 = Old PIN + new PIN twice)
+                0x01, //Confirmation (1 = enter new PIN twice, no old PIN)
                 0x02, //Entry validation condition (2 = press OK)
                 (byte)0xff, //Number of messages
                 0x04, //Language
