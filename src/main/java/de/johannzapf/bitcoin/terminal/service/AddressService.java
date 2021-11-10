@@ -1,5 +1,6 @@
 package de.johannzapf.bitcoin.terminal.service;
 
+import de.johannzapf.bitcoin.terminal.Settings;
 import de.johannzapf.bitcoin.terminal.exception.PaymentFailedException;
 import de.johannzapf.bitcoin.terminal.objects.Address;
 import de.johannzapf.bitcoin.terminal.objects.UTXO;
@@ -24,7 +25,7 @@ public class AddressService {
     public static Address getAddressInfo(String btcAddress) {
         try {
             URL url = new URL(Constants.BLOCKCYPHER_API + "/addrs/" + btcAddress +
-                    "?unspentOnly=true&includeScript=true");
+                    "?unspentOnly=true&includeScript=true&confirmations=" + Settings.MINIMUM_CONFIRMATIONS);
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
 
