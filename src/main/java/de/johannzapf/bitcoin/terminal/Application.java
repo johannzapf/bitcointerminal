@@ -23,7 +23,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0099;
+    private static double amount = 0.0118;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -76,17 +76,24 @@ public class Application {
             if (!connectionMode && amount > CONTACTLESS_LIMIT) {
                 System.out.println("Please insert your Card for amounts greater than " + CONTACTLESS_LIMIT + " BTC");
                 terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
-            } else {
-                break;
+                continue;
             }
-        } while (true);
 
-        if(!cardStatus(channel)){
-            System.out.println("Please set a PIN on the smart card reader");
-            PINService.modifyPin(card);
-            System.out.println("Initializing Bitcoin Wallet on this card...");
-            initializeWallet(channel);
-        }
+            if(!cardStatus(channel)){
+                if(!connectionMode){
+                    System.out.println("Please insert the card into the card slot in order to initialize it.");
+                    terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+                    continue;
+                }
+                System.out.println("Please set a PIN on the smart card reader");
+                PINService.modifyPin(card);
+                System.out.println("Initializing Bitcoin Wallet on this card...");
+                initializeWallet(channel);
+            }
+
+            break;
+
+        } while (true);
 
         if(connectionMode){
             System.out.println("-------------- PIN Verification --------------");
