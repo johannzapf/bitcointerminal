@@ -23,6 +23,8 @@ public class Constants {
     public static final int P1_MAINNET = 0x01;
     public static final int P1_TESTNET = 0x02;
 
+    public static final int SW_NFC_LIMIT_EXCEEDED = 0x6901;
+
     public static final NetworkParameters netParams = TESTNET ? NetworkParameters.fromID(NetworkParameters.ID_TESTNET)
             : NetworkParameters.fromID(NetworkParameters.ID_MAINNET);
 

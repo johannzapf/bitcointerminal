@@ -23,7 +23,7 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.009;
+    private static double amount = 0.003;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
     private static Scanner scanner = new Scanner(System.in);
@@ -45,10 +45,7 @@ public class Application {
         }
 
         System.out.println("-------------- Connecting to Card --------------");
-        Card card;
-        CardChannel channel;
-        long start;
-        boolean connectionMode;
+        byte[] transaction;
         do{
             System.out.println("Waiting for Card...");
             if (!terminal.waitForCardPresent(CARD_READER_TIMEOUT)) {
@@ -56,11 +53,11 @@ public class Application {
                 return;
             }
 
-            start = System.nanoTime();
+            long start = System.nanoTime();
 
-            card = terminal.connect("*");
+            Card card = terminal.connect("*");
             PINService.parseControlCodes(card);
-            channel = card.getBasicChannel();
+            CardChannel channel = card.getBasicChannel();
 
             if (!selectApplet(channel)) {
                 System.out.println("ERROR: No Bitcoin Wallet Applet on this Card");
@@ -74,76 +71,79 @@ public class Application {
                 continue;
             }
 
-            connectionMode = connectionMode(channel);
-
-            if (!connectionMode && amount > CONTACTLESS_LIMIT) {
-                System.out.println("Please insert your Card for amounts greater than " + CONTACTLESS_LIMIT + " BTC");
-                terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
-            } else {
-                break;
+            if(!cardStatus(channel)){
+                System.out.println("Initializing Bitcoin Wallet on this card...");
+                initializeWallet(channel);
+                System.out.println("Please set a PIN on the smart card reader");
+                PINService.modifyPin(card);
             }
-        } while (true);
 
-        if(!cardStatus(channel)){
-            System.out.println("Initializing Bitcoin Wallet on this card...");
-            initializeWallet(channel);
-            System.out.println("Please set a PIN on the smart card reader");
-            PINService.modifyPin(card);
-        }
-
-        if(connectionMode){
-            System.out.println("-------------- PIN Verification --------------");
-            int tries = remainingPINTries(channel);
-            if(tries == 0){
-                System.out.println("Your card has been locked. Please contact the manufacturer.");
-                return;
-            }
-            System.out.println("Please enter your PIN (" + tries + " tries left)");
-            while(true){
-                byte[] res = PINService.verifyPin(card);
-                if(!bytesToHex(res).equals("9000")){
-                    tries = remainingPINTries(channel);
-                    if(tries == 0){
-                        System.out.println("Your card has been locked. Please contact the manufacturer.");
-                        return;
+            if(connectionMode(channel)){
+                System.out.println("-------------- PIN Verification --------------");
+                int tries = remainingPINTries(channel);
+                if(tries == 0){
+                    System.out.println("Your card has been locked. Please contact the manufacturer.");
+                    return;
+                }
+                System.out.println("Please enter your PIN (" + tries + " tries left)");
+                while(true){
+                    byte[] res = PINService.verifyPin(card);
+                    if(!bytesToHex(res).equals("9000")){
+                        tries = remainingPINTries(channel);
+                        if(tries == 0){
+                            System.out.println("Your card has been locked. Please contact the manufacturer.");
+                            return;
+                        } else {
+                            System.out.println("Wrong PIN, please try again (" + tries + " tries left)");
+                        }
                     } else {
-                        System.out.println("Wrong PIN, please try again (" + tries + " tries left)");
+                        break;
                     }
-                } else {
-                    break;
                 }
             }
-        }
 
 
-        System.out.println("------------ Payment Process Start ------------");
-        String btcAddress = getAddress(channel);
-        System.out.println(">> Address: " + btcAddress);
+            System.out.println("------------ Payment Process Start ------------");
+            String btcAddress = getAddress(channel);
+            System.out.println(">> Address: " + btcAddress);
 
-        long sAmount = BTCToSatoshi(amount);
+            long sAmount = BTCToSatoshi(amount);
 
-        Address address = AddressService.getAddressInfo(btcAddress);
-        System.out.println("Available balance in this wallet: " + address.getFinalBalance() +
-                " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
+            Address address = AddressService.getAddressInfo(btcAddress);
+            System.out.println("Available balance in this wallet: " + address.getFinalBalance() +
+                    " BTC (confirmed: " + address.getConfirmedBalance() + " BTC)");
 
-        List<UTXO> utxos = address.findProperUTXOs(sAmount);
+            List<UTXO> utxos = address.findProperUTXOs(sAmount);
 
-        if(BTCToSatoshi(address.getFinalBalance()) < calculateFee(utxos.size()) + sAmount) {
-            System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
-            return;
-        }
-        if(utxos.size() > 3){
-            throw new PaymentFailedException("No support for Transactions with more than three inputs");
-        }
-        System.out.println("Transaction requires " + utxos.size() + " input(s)");
+            if(BTCToSatoshi(address.getFinalBalance()) < calculateFee(utxos.size()) + sAmount) {
+                System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
+                return;
+            }
+            if(utxos.size() > 3){
+                throw new PaymentFailedException("No support for Transactions with more than three inputs");
+            }
+            System.out.println("Transaction requires " + utxos.size() + " input(s)");
 
-        byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
+            byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
 
-        System.out.println("Sending to Smartcard for approval...");
-        byte[] transaction = createTransaction(channel, txParams);
+            System.out.println("Sending to Smartcard for approval...");
+            ResponseAPDU res = createTransaction(channel, txParams);
 
-        double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-        System.out.println("You can remove your card (" + format.format(elapsed) + " Seconds)");
+            if(isSuccessful(res)){
+                transaction = res.getData();
+            } else if(res.getSW() == SW_NFC_LIMIT_EXCEEDED){
+                System.out.println("Please insert your Card for amounts greater than 0.002 BTC");
+                terminal.waitForCardAbsent(CARD_READER_TIMEOUT);
+                continue;
+            } else {
+                throw new PaymentFailedException("Transaction returned " + Integer.toHexString(res.getSW()));
+            }
+
+            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
+            System.out.println("You can remove your card (" + format.format(elapsed) + " Seconds)");
+            break;
+        } while (true);
+
 
         String finalTransaction = Util.bytesToHex(transaction);
         System.out.println("FINAL TRANSACTION: " + finalTransaction);
@@ -159,15 +159,9 @@ public class Application {
         System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
     }
 
-    private static byte[] createTransaction(CardChannel channel, byte[] params) throws CardException{
+    private static ResponseAPDU createTransaction(CardChannel channel, byte[] params) throws CardException{
         CommandAPDU pay = new CommandAPDU(CLA, INS_CREATE_TRANSACTION, 0x00, 0x00, params);
-        ResponseAPDU res = channel.transmit(pay);
-        if(isSuccessful(res)){
-            byte[] data = res.getData();
-            return data;
-        } else {
-            throw new PaymentFailedException("Transaction returned " + Integer.toHexString(res.getSW()));
-        }
+        return channel.transmit(pay);
     }
 
     private static boolean version(CardChannel channel) throws CardException {
