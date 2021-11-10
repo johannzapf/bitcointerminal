@@ -31,7 +31,7 @@ public class Application {
 
 
     /**
-     * The main method. Run this to start the payment terminal.
+     * The main method. Run this method each time you want to process a new transaction.
      * @param args
      * @throws CardException
      * @throws NoSuchAlgorithmException
@@ -47,7 +47,6 @@ public class Application {
         System.out.println("-------------- Connecting to Card --------------");
         Card card;
         CardChannel channel;
-        long start;
         boolean connectionMode;
         do{
             System.out.println("Waiting for Card...");
@@ -55,8 +54,6 @@ public class Application {
                 System.out.println("ERROR: Terminal timeout");
                 return;
             }
-
-            start = System.nanoTime();
 
             card = terminal.connect("*");
             PINService.parseControlCodes(card);
@@ -99,9 +96,10 @@ public class Application {
                 return;
             }
             System.out.println("Please enter your PIN (" + tries + " tries left)");
-            while(true){
+            while(true){ // Loop runs until the correct PIN has been entered
                 byte[] res = PINService.verifyPin(card);
                 if(!bytesToHex(res).equals("9000")){
+                    // PIN was not entered correctly
                     tries = remainingPINTries(channel);
                     if(tries == 0){
                         System.out.println("Your card has been locked. Please contact the manufacturer.");
@@ -117,6 +115,7 @@ public class Application {
 
 
         System.out.println("------------ Payment Process Start ------------");
+        long start = System.nanoTime();
         String btcAddress = getAddress(channel);
         System.out.println(">> Address: " + btcAddress);
         byte[] pubKey = getPubKey(channel);
@@ -163,6 +162,13 @@ public class Application {
         System.out.println("Transaction with hash \"" + hash + "\" was successfully broadcast.");
     }
 
+    /**
+     * Sends the transaction hash to the card and returns the resulting signature.
+     * @param channel
+     * @param transaction
+     * @return
+     * @throws CardException
+     */
     private static byte[] signTransaction(CardChannel channel, byte[] transaction) throws CardException{
         CommandAPDU sign = new CommandAPDU(CLA, INS_SIGN, 0x00, 0x00, transaction);
         ResponseAPDU res = channel.transmit(sign);
@@ -174,6 +180,13 @@ public class Application {
         }
     }
 
+    /**
+     * Asks the card which version it has.
+     * Returns true if the card is compatible with this type of terminal.
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static boolean version(CardChannel channel) throws CardException {
         CommandAPDU version = new CommandAPDU(CLA, INS_VERSION, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(version);
@@ -186,6 +199,13 @@ public class Application {
         }
     }
 
+    /**
+     * Asks the card how it is connected.
+     * Returns true if card is connected physically and false if it is connected via NFC.
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static boolean connectionMode(CardChannel channel) throws CardException {
         CommandAPDU conn = new CommandAPDU(CLA, INS_CONN_MODE, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(conn);
@@ -202,6 +222,13 @@ public class Application {
         }
     }
 
+    /**
+     * Asks the card for its status.
+     * Returns true if the card is initialized (i.e. already has an address).
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static boolean cardStatus(CardChannel channel) throws CardException {
         CommandAPDU status = new CommandAPDU(CLA, INS_STATUS, 0x00, 0x00, 0x01);
         ResponseAPDU res = channel.transmit(status);
@@ -214,13 +241,12 @@ public class Application {
         }
     }
 
-    private static void initializeWallet(CardChannel channel) throws CardException {
-        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00);
-        if(!isSuccessful(channel.transmit(init))){
-            throw new PaymentFailedException("Error initializing Wallet");
-        }
-    }
-
+    /**
+     * Asks the card how many PIN tries are left.
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static int remainingPINTries(CardChannel channel) throws CardException {
         CommandAPDU status = new CommandAPDU(CLA, INS_PIN_REMAINING_TRIES, 0x00, 0x00, 0x01);
         ResponseAPDU res = channel.transmit(status);
@@ -231,6 +257,24 @@ public class Application {
         }
     }
 
+    /**
+     * Triggers initializing the card (i.e. creating a keypair and an address).
+     * @param channel
+     * @throws CardException
+     */
+    private static void initializeWallet(CardChannel channel) throws CardException {
+        CommandAPDU init = new CommandAPDU(CLA, INS_INIT, TESTNET ? P1_TESTNET : P1_MAINNET, 0x00);
+        if(!isSuccessful(channel.transmit(init))){
+            throw new PaymentFailedException("Error initializing Wallet");
+        }
+    }
+
+    /**
+     * Asks the card for its address.
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static String getAddress(CardChannel channel) throws CardException {
         CommandAPDU addr = new CommandAPDU(CLA, INS_GET_ADDR, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(addr);
@@ -241,6 +285,12 @@ public class Application {
         }
     }
 
+    /**
+     * Asks the card for its public key.
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static byte[] getPubKey(CardChannel channel) throws CardException {
         CommandAPDU pubKey = new CommandAPDU(CLA, INS_GET_PUBKEY, 0x00, 0x00);
         ResponseAPDU res = channel.transmit(pubKey);
@@ -251,7 +301,13 @@ public class Application {
         }
     }
 
-    private static CardTerminal initializeTerminal() throws NoSuchAlgorithmException, CardException {
+
+    /**
+     * This method connects to a smart card reader.
+     * @return
+     * @throws CardException
+     */
+    private static CardTerminal initializeTerminal() throws CardException {
         TerminalManager.fixPlatformPaths();
         TerminalFactory factory = TerminalFactory.getDefault();
         List<CardTerminal> terminals = factory.terminals().list();
@@ -263,6 +319,9 @@ public class Application {
         return DEBUG ? lct : terminal;
     }
 
+    /**
+     * Helper method to read parameters for payment (amount and recipient).
+     */
     private static void readPaymentParams(){
         System.out.println("Payment Amount (BTC): ");
         amount = Double.parseDouble(scanner.nextLine());
@@ -270,12 +329,23 @@ public class Application {
         targetAddress = scanner.nextLine();
     }
 
+    /**
+     * Tells the JCVM to select our wallet applet.
+     * @param channel
+     * @return
+     * @throws CardException
+     */
     private static boolean selectApplet(CardChannel channel) throws CardException {
         CommandAPDU select = new CommandAPDU(0x00, 0xA4, 0x04, 0x00, Constants.APPLET_AID);
         ResponseAPDU res = channel.transmit(select);
         return isSuccessful(res);
     }
 
+    /**
+     * Returns true if the Command-APDU was executed successfully.
+     * @param responseAPDU
+     * @return
+     */
     private static boolean isSuccessful(ResponseAPDU responseAPDU){
         return responseAPDU.getSW() == 0x9000;
     }

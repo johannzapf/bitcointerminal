@@ -15,6 +15,10 @@ public class TransactionInput {
     private byte[] sequence = {(byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff};
 
 
+    /**
+     * Constructor to parse a UTXO object into a TransactionInput to be used in a transaction.
+     * @param inputTransaction
+     */
     public TransactionInput(UTXO inputTransaction){
         byte[] outputScriptPubKey1 = Util.hexStringToByteArray(inputTransaction.getOutputPubKey());
         this.previousTxHash = reverse(Util.hexStringToByteArray(inputTransaction.getHash()));

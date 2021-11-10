@@ -14,6 +14,13 @@ import java.util.List;
 
 public class TransactionService {
 
+    /**
+     * Takes a Transaction object and the signatures by the card and creates the final transaction.
+     * @param tx
+     * @param signatures
+     * @param pubKey
+     * @return
+     */
     public static String createTransaction(Transaction tx, List<byte[]> signatures,
                                            byte[] pubKey){
         List<TransactionInput> inputs = tx.getInputs();
@@ -30,6 +37,12 @@ public class TransactionService {
         return tx.toString();
     }
 
+    /**
+     * Constrcuts a ScriptSig from a signature and a public key
+     * @param signature
+     * @param pubKey
+     * @return
+     */
     private static byte[] getScriptSig(byte[] signature, byte[] pubKey){
         byte[] scriptSig = new byte[3 + signature.length + pubKey.length];
         scriptSig[0] = (byte) (signature.length + 1);
@@ -46,6 +59,11 @@ public class TransactionService {
         return scriptSig;
     }
 
+    /**
+     * Broadcasts a given raw bitcoin transaction (as a hex string) to the blockchain via the BlockCypher API.
+     * @param transaction
+     * @return
+     */
     public static String broadcastTransaction(String transaction) {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()

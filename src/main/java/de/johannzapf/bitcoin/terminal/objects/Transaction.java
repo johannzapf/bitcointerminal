@@ -38,6 +38,13 @@ public class Transaction {
     private byte[] sigHashCode = {0x01, 0x00, 0x00, 0x00};
 
 
+    /**
+     * Constructor used to create a transaction object.
+     * @param inputTransactions
+     * @param outAmount
+     * @param destinationAddress
+     * @param senderAddress
+     */
     public Transaction(List<UTXO> inputTransactions, int outAmount,
                        String destinationAddress, String senderAddress){
 
@@ -60,6 +67,11 @@ public class Transaction {
         this.scriptPubKey2 = constructScriptPubKey(pubKeyHash2, pubKeyHash1.length + 5);
     }
 
+    /**
+     * Returns a list of all hashes that need to be signed by the card.
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
     public List<byte[]> toSign() throws NoSuchAlgorithmException {
         List<byte[]> hashes = new ArrayList<>();
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -113,6 +125,11 @@ public class Transaction {
                 bytesToHex(locktime);
     }
 
+    /**
+     * Converts an amount of satoshis into the 8 byte little endian format used by bitcoin.
+     * @param satoshi
+     * @return
+     */
     public static byte[] getValue(long satoshi) {
         byte[] value = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         String hex = Long.toHexString(satoshi);
@@ -127,6 +144,12 @@ public class Transaction {
         return value;
     }
 
+    /**
+     * Constructs a scriptpubkey.
+     * @param pubKeyHash
+     * @param scriptLength
+     * @return
+     */
     public static byte[] constructScriptPubKey(byte[] pubKeyHash, int scriptLength){
         byte[] scriptPubKey = new byte[scriptLength];
         scriptPubKey[0] = (byte) 0x76;
@@ -141,6 +164,11 @@ public class Transaction {
         return scriptPubKey;
     }
 
+    /**
+     * Converts a bitcoin address into a PubKeyHash using the org.bitcoinj library
+     * @param address
+     * @return
+     */
     public static byte[] getPubKeyHash(String address){
         return Address.fromString(Constants.netParams, address).getHash();
     }
