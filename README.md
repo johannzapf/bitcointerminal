@@ -7,6 +7,18 @@ Terminal application for [Java Card Bitcoin Wallet](https://github.com/johannzap
 1. Connect a smart card reader to your computer
 1. Run Application.main() for each payment process you want to initiate
 
+## Versions
+There are two, incompatible versions of this application:
+1. Version A
+    * can be found on the *signaturecard*-Branch
+    * is only compatible with the *signaturecard*-Branch of the applet
+    * smart card is only used to sign transactions prepared by the terminal
+
+2. Version B (this version)
+    * can be found on the *master*-Branch
+    * is only compatible with the *master*-Branch of the applet
+    * smart card creates the transaction on its own with data sent from the terminal
+
 ## Used dependencies (via Maven)
 * apdu4j (for communication with the smart card)
 * slf4j and lombok (for convenience)
