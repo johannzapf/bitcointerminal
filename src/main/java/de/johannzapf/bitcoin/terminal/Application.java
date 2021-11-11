@@ -23,11 +23,13 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 
 public class Application {
 
-    private static double amount = 0.0118;
-    private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final DecimalFormat format = new DecimalFormat("#0.00");
 
-    private static Scanner scanner = new Scanner(System.in);
-    private static DecimalFormat format = new DecimalFormat("#0.00");
+
+    // You can set PROMPT_FOR_PAYMENT_PARAMS to false and simply edit these variables
+    private static double amount = 0.0028;
+    private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
 
     /**
