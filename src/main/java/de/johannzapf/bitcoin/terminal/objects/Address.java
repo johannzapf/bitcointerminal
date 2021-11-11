@@ -23,6 +23,7 @@ public class Address {
 
     /**
      * Goes through all UTXOs and returns the minimum set of UTXOs needed to spent the given amount (including fees).
+     * Makes use of the fact that the List<UTXO> is already sorted by Address.getAddressInfo()
      * @param amount
      * @return
      */
