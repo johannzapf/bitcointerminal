@@ -13,7 +13,6 @@ import de.johannzapf.bitcoin.terminal.util.Util;
 import org.bitcoinj.core.Base58;
 
 import javax.smartcardio.*;
-import java.text.DecimalFormat;
 import java.util.*;
 
 import static de.johannzapf.bitcoin.terminal.util.Constants.*;
