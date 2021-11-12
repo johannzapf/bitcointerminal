@@ -23,7 +23,6 @@ import static de.johannzapf.bitcoin.terminal.util.Util.*;
 public class Application {
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static final DecimalFormat format = new DecimalFormat("#0.00");
 
 
     // You can set PROMPT_FOR_PAYMENT_PARAMS to false and simply edit these variables
@@ -110,7 +109,6 @@ public class Application {
 
 
             System.out.println("------------ Payment Process Start ------------");
-            long start = System.nanoTime();
 
             String btcAddress = getAddress(channel);
             System.out.println(">> Address: " + btcAddress);
@@ -147,8 +145,7 @@ public class Application {
                 throw new PaymentFailedException("Transaction returned " + Integer.toHexString(res.getSW()));
             }
 
-            double elapsed = ((double)(System.nanoTime()-start))/1_000_000_000;
-            System.out.println("You can remove your card (" + format.format(elapsed) + " Seconds)");
+            System.out.println("You can remove your card");
             break;
         } while (true);
 
