@@ -25,7 +25,7 @@ public class Application {
 
 
     // You can set PROMPT_FOR_PAYMENT_PARAMS to false and simply edit these variables
-    private static double amount = 0.0117;
+    private static double amount = 0.007;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
 
@@ -124,14 +124,14 @@ public class Application {
                 System.out.println("ERROR: The funds in this wallet are not sufficient for this transaction.");
                 return;
             }
-            if(utxos.size() > 10){
-                throw new PaymentFailedException("No support for Transactions with more than ten inputs");
+            if(utxos.size() > 7){
+                throw new PaymentFailedException("No support for Transactions with more than seven inputs");
             }
             System.out.println("Transaction requires " + utxos.size() + " input(s)");
 
             byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
 
-            System.out.println("Sending to Smartcard for approval...");
+            System.out.println("Sending to Smartcard for approval...: " + bytesToHex(txParams));
             ResponseAPDU res = createTransaction(channel, txParams);
 
             if(isSuccessful(res)){
