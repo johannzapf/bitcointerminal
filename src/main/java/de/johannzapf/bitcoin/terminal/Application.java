@@ -25,7 +25,7 @@ public class Application {
 
 
     // You can set PROMPT_FOR_PAYMENT_PARAMS to false and simply edit these variables
-    private static double amount = 0.007;
+    private static double amount = 0.004;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
 
@@ -131,7 +131,7 @@ public class Application {
 
             byte[] txParams = TransactionService.constructTxParams(targetAddress, sAmount, utxos);
 
-            System.out.println("Sending to Smartcard for approval...: " + bytesToHex(txParams));
+            System.out.println("Sending to Smartcard for approval...");
             ResponseAPDU res = createTransaction(channel, txParams);
 
             if(isSuccessful(res)){
