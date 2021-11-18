@@ -25,8 +25,8 @@ public class Application {
     private static final Scanner scanner = new Scanner(System.in);
 
 
-    // You can set PROMPT_FOR_PAYMENT_PARAMS to false and simply edit these variables
-    private static double amount = 0.011;
+    // You can set Settings.PROMPT_FOR_PAYMENT_PARAMS to false and simply edit these variables
+    private static double amount = 0.004;
     private static String targetAddress = "mx8hFo32gKFsbSCixfksbCNUhuDGWHzFC3";
 
 
