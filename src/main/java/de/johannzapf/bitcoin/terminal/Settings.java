@@ -18,11 +18,11 @@ public class Settings {
     public static final int MINIMUM_CONFIRMATIONS = 0;
 
     // The fee the application uses, in satoshi per byte
-    public static final long FEE = 10;
+    public static final long FEE = 5;
 
     // When set to true, the application will log all APDU traffic
     public static final boolean DEBUG = false;
 
     // The time in milliseconds after which the application will terminate when no card is inserted into the reader
-    public static final long CARD_READER_TIMEOUT = 60000;
+    public static final long CARD_READER_TIMEOUT = 120000;
 }
