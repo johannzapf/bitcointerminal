@@ -14,7 +14,7 @@ public class PINService {
     private static int CONTROL_CODE_MODIFY;
 
     /**
-     * This method executes the GET_FEATURES command on our card.
+     * This method executes the GET_FEATURES command on the card.
      * It extracts the control codes for PIN handling since these are different for different cards and environments.
      * @param card
      * @throws CardException
@@ -33,7 +33,7 @@ public class PINService {
     }
 
     /**
-     * This method tells our smart card reader to verify a PIN and forward it to our CLA and INS_VERIFY_PIN
+     * This method tells the smart card reader to verify a PIN and forward it to the respective CLA and INS_VERIFY_PIN
      * @param card
      * @return
      * @throws CardException
@@ -60,9 +60,9 @@ public class PINService {
     }
 
     /**
-     * This method tells our smart card reader to modify a PIN and forward it to our CLA and INS_MODIFY_PIN.
-     * It tells the reader to not ask for the old PIN since we only use this method for initial PIN setup.
-     * Our card prevents that this method is misused to change an already existing PIN.
+     * This method tells the smart card reader to modify a PIN and forward it to the respective CLA and INS_MODIFY_PIN.
+     * It tells the reader to not ask for the old PIN since this method is only used for initial PIN setup.
+     * The card prevents that this method is misused to change an already existing PIN.
      * @param card
      * @return
      * @throws CardException

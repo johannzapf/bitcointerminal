@@ -176,7 +176,7 @@ public class Application {
     }
 
     /**
-     * Asks the card which version it has.
+     * Asks the card for its version.
      * Returns true if the card is compatible with this type of terminal.
      * @param channel
      * @return
@@ -308,7 +308,7 @@ public class Application {
     }
 
     /**
-     * Tells the JCVM to select our wallet applet.
+     * Tells the JCVM to select the wallet applet.
      * @param channel
      * @return
      * @throws CardException

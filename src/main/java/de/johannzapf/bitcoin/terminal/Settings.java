@@ -12,13 +12,13 @@ public class Settings {
 
     // When set to true, the application will ask for the recipient and amount at runtime
     // You can set this to false and simply edit the respective instance variables in the application class
-    public static final boolean PROMPT_FOR_PAYMENT_PARAMS = false;
+    public static final boolean PROMPT_FOR_PAYMENT_PARAMS = true;
 
     // The minimum number of confirmations a UTXO needs to have in order to be allowed to be spent
     public static final int MINIMUM_CONFIRMATIONS = 0;
 
     // The fee the application uses, in satoshi per byte
-    public static final long FEE = 5;
+    public static final long FEE = 10;
 
     // When set to true, the application will log all APDU traffic
     public static final boolean DEBUG = false;
