@@ -8,7 +8,7 @@ Terminal application for [Java Card Bitcoin Wallet](https://github.com/johannzap
 1. Run Application.main() for each payment process you want to initiate
 
 ## Versions
-There are two, incompatible versions of this application:
+There are two incompatible versions of this application:
 1. Version A
     * can be found on the *signaturecard*-Branch
     * is only compatible with the *signaturecard*-Branch of the applet
