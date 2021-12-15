@@ -23,7 +23,7 @@ public class Util {
 
     /**
      * Calculates a fee from the amount of inputs in a transaction.
-     * Makes use of the fact that, in our case, a transaction is about (80 + 180 * amount of inputs) bytes long.
+     * Makes use of the fact that, in this case, a transaction is about (80 + 180 * amount of inputs) bytes long.
      * @param inputsAmount
      * @return
      */
